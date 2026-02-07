@@ -1,10 +1,11 @@
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { useQueue } from '../store/QueueContext';
 import { useAuth } from '../hooks/useAuth';
-import { QueueStatus, JourneyStage, QueueItem } from '../types';
+import { QueueStatus, JourneyStage, QueueItem, Hospital } from '../types';
 import { HOSPITALS } from '../constants';
+import { supabase } from '../lib/supabase';
 import InfoTooltip from '../components/InfoTooltip';
 
 const AdminDashboard: React.FC = () => {
@@ -13,23 +14,98 @@ const AdminDashboard: React.FC = () => {
   const { user, signOut, isAuthenticated } = useAuth(); // Auth Hook
   const { queue, updateQueueItem, advanceQueue, addQueueItem, acceptBooking, hospitals } = useQueue();
 
-  const hospital = hospitals.find(h => h.id === hospitalId) || HOSPITALS.find(h => h.id === hospitalId);
+  const [hospital, setHospital] = useState<Hospital | null>(null);
+  const [hospitalLoading, setHospitalLoading] = useState(true);
   const [selectedDept, setSelectedDept] = useState('OPD');
   const [showWalkInModal, setShowWalkInModal] = useState(false);
   const [walkInName, setWalkInName] = useState('');
   const [walkInService, setWalkInService] = useState('');
   const [viewDate, setViewDate] = useState(new Date().toISOString().split('T')[0]);
 
+  // Fetch hospital data from Supabase
+  useEffect(() => {
+    const fetchHospital = async () => {
+      if (!hospitalId) {
+        setHospitalLoading(false);
+        return;
+      }
+
+      // First try local context
+      const localHospital = hospitals.find(h => h.id === hospitalId) || HOSPITALS.find(h => h.id === hospitalId);
+
+      if (localHospital) {
+        setHospital(localHospital);
+        setHospitalLoading(false);
+        return;
+      }
+
+      // If not in context, fetch from Supabase
+      try {
+        const { data, error } = await supabase
+          .from('hospitals')
+          .select('*')
+          .eq('id', hospitalId)
+          .single();
+
+        if (error) throw error;
+
+        if (data) {
+          // Map Supabase data to Hospital type
+          const mappedHospital: Hospital = {
+            id: data.id,
+            name: data.name,
+            location: data.location,
+            departments: data.departments || ['OPD'],
+            services: data.services || {},
+            registrationFee: data.registration_fee || 0,
+            isOpen: data.is_open !== false,
+          };
+          setHospital(mappedHospital);
+        }
+      } catch (err) {
+        console.error('Error fetching hospital:', err);
+      } finally {
+        setHospitalLoading(false);
+      }
+    };
+
+    fetchHospital();
+  }, [hospitalId, hospitals]);
+
   // Protect Route
-  React.useEffect(() => {
+  useEffect(() => {
     if (!isAuthenticated) {
       // Redirect to specific admin login if we know the hospital ID
       navigate(`/admin/${hospitalId}/login`);
     }
   }, [isAuthenticated, navigate, hospitalId]);
 
+  if (hospitalLoading) {
+    return (
+      <div className="p-12 text-center">
+        <div className="inline-block w-8 h-8 border-4 border-teal-600 border-t-transparent rounded-full animate-spin"></div>
+        <p className="mt-4 font-bold text-slate-600">Loading hospital information...</p>
+      </div>
+    );
+  }
+
   if (!hospital) {
-    return <div className="p-12 text-center font-bold text-red-500">Invalid Hospital Access</div>;
+    return (
+      <div className="p-12 text-center">
+        <div className="max-w-md mx-auto bg-red-50 border border-red-200 rounded-2xl p-8">
+          <h2 className="text-xl font-black text-red-900 mb-2">Hospital Not Found</h2>
+          <p className="text-red-700 font-medium mb-4">
+            We couldn't find a hospital with this ID.
+          </p>
+          <button
+            onClick={() => navigate('/register-hospital')}
+            className="px-6 py-3 bg-teal-600 text-white font-bold rounded-xl hover:bg-teal-700"
+          >
+            Register a Hospital
+          </button>
+        </div>
+      </div>
+    );
   }
 
   if (!isAuthenticated) return null;

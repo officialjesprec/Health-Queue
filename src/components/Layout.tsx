@@ -1,13 +1,15 @@
 import React, { useEffect } from 'react';
-import { Link, useLocation } from 'react-router-dom';
-import { useAuth } from '../hooks/useAuth';
+import { Link, useLocation, useNavigate } from 'react-router-dom';
+import { useAuth, useIsStaff } from '../hooks/useAuth';
 import { useQueue } from '../store/QueueContext';
 import { Logo } from './Logo';
 
 const Layout: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const location = useLocation();
+  const navigate = useNavigate();
   const { user, signOut: authSignOut, loading } = useAuth(); // Modified useAuth destructuring
   const { user: queueUser, registerUser } = useQueue(); // Added useQueue destructuring
+  const { isStaff, staffData, loading: staffLoading } = useIsStaff(); // Check if user is staff
   const isAdmin = location.pathname.startsWith('/admin');
   const isAuthPage = location.pathname.startsWith('/auth');
 
@@ -26,6 +28,21 @@ const Layout: React.FC<{ children: React.ReactNode }> = ({ children }) => {
     }
   }, [user, queueUser, registerUser]);
   const { isAuthenticated } = useAuth(); // Kept this line as per instruction, though it's redundant with `user`
+
+  // Handle dashboard link click - route based on user type
+  const handleDashboardClick = (e: React.MouseEvent) => {
+    e.preventDefault();
+
+    if (staffLoading) return; // Wait for staff check to complete
+
+    if (isStaff && staffData?.hospital_id) {
+      // Staff user - go to their hospital's admin dashboard
+      navigate(`/admin/${staffData.hospital_id}/dashboard`);
+    } else {
+      // Regular patient - go to patient dashboard
+      navigate('/dashboard');
+    }
+  };
 
   // Simple layout for auth pages
   if (isAuthPage) {
@@ -50,9 +67,14 @@ const Layout: React.FC<{ children: React.ReactNode }> = ({ children }) => {
                 <>
                   {isAuthenticated ? (
                     <>
-                      <Link to="/dashboard" className="btn-ghost btn-sm">
+                      <a
+                        href="#"
+                        onClick={handleDashboardClick}
+                        className="btn-ghost btn-sm flex items-center gap-2"
+                      >
                         Dashboard
-                      </Link>
+                        {staffLoading && <span className="w-3 h-3 border-2 border-teal-600 border-t-transparent rounded-full animate-spin"></span>}
+                      </a>
                       <button onClick={authSignOut} className="btn-ghost btn-sm text-red-500 hover:bg-red-50 hover:text-red-600">
                         Sign Out
                       </button>
