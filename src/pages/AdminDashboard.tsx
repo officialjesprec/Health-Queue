@@ -2,6 +2,7 @@
 import React, { useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { useQueue } from '../store/QueueContext';
+import { useAuth } from '../hooks/useAuth';
 import { QueueStatus, JourneyStage, QueueItem } from '../types';
 import { HOSPITALS } from '../constants';
 import InfoTooltip from '../components/InfoTooltip';
@@ -9,8 +10,9 @@ import InfoTooltip from '../components/InfoTooltip';
 const AdminDashboard: React.FC = () => {
   const { hospitalId } = useParams();
   const navigate = useNavigate();
+  const { user, signOut, isAuthenticated } = useAuth(); // Auth Hook
   const { queue, updateQueueItem, advanceQueue, addQueueItem, acceptBooking, hospitals } = useQueue();
-  
+
   const hospital = hospitals.find(h => h.id === hospitalId) || HOSPITALS.find(h => h.id === hospitalId);
   const [selectedDept, setSelectedDept] = useState('OPD');
   const [showWalkInModal, setShowWalkInModal] = useState(false);
@@ -18,13 +20,23 @@ const AdminDashboard: React.FC = () => {
   const [walkInService, setWalkInService] = useState('');
   const [viewDate, setViewDate] = useState(new Date().toISOString().split('T')[0]);
 
+  // Protect Route
+  React.useEffect(() => {
+    if (!isAuthenticated) {
+      // Redirect to specific admin login if we know the hospital ID
+      navigate(`/admin/${hospitalId}/login`);
+    }
+  }, [isAuthenticated, navigate, hospitalId]);
+
   if (!hospital) {
     return <div className="p-12 text-center font-bold text-red-500">Invalid Hospital Access</div>;
   }
 
+  if (!isAuthenticated) return null;
+
   const filteredQueue = queue.filter(q => q.hospitalId === hospitalId && q.department === selectedDept && q.date === viewDate && q.status !== QueueStatus.PENDING);
   const pendingBookings = queue.filter(q => q.hospitalId === hospitalId && q.status === QueueStatus.PENDING);
-  
+
   const isToday = viewDate === new Date().toISOString().split('T')[0];
 
   const stats = {
@@ -79,14 +91,14 @@ const AdminDashboard: React.FC = () => {
         <div className="flex flex-wrap items-center gap-3">
           <div className="bg-white border-2 border-slate-100 rounded-xl px-4 py-2 flex items-center space-x-3 shadow-sm">
             <svg className="w-4 h-4 text-slate-400" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 00-2 2z" /></svg>
-            <input 
-              type="date" 
-              className="bg-transparent border-none outline-none text-sm font-bold text-slate-700" 
+            <input
+              type="date"
+              className="bg-transparent border-none outline-none text-sm font-bold text-slate-700"
               value={viewDate}
               onChange={(e) => setViewDate(e.target.value)}
             />
           </div>
-          <button 
+          <button
             onClick={() => setShowWalkInModal(true)}
             className="px-4 py-2.5 bg-slate-900 text-white font-black rounded-xl hover:bg-slate-800 flex items-center space-x-2 transition-all shadow-lg shadow-slate-200 active:scale-95"
           >
@@ -94,7 +106,7 @@ const AdminDashboard: React.FC = () => {
             <span className="text-sm">New Entry</span>
           </button>
           {isToday && (
-            <button 
+            <button
               onClick={() => advanceQueue(hospital.id, selectedDept)}
               className="px-4 py-2.5 bg-teal-600 text-white font-black rounded-xl hover:bg-teal-700 flex items-center space-x-2 transition-all shadow-lg shadow-teal-100 active:scale-95"
             >
@@ -102,6 +114,15 @@ const AdminDashboard: React.FC = () => {
               <span className="text-sm">Call Next</span>
             </button>
           )}
+          <button
+            onClick={() => {
+              signOut();
+              navigate(`/admin/${hospital.id}/login`);
+            }}
+            className="px-4 py-2.5 bg-red-50 text-red-600 font-black rounded-xl hover:bg-red-100 flex items-center space-x-2 transition-all border border-red-100"
+          >
+            <span className="text-sm">Log Out</span>
+          </button>
         </div>
       </div>
 
@@ -139,13 +160,13 @@ const AdminDashboard: React.FC = () => {
                   </div>
                 </div>
                 <div className="flex space-x-2 w-full md:w-auto">
-                  <button 
+                  <button
                     onClick={() => updateQueueItem(item.id, { status: QueueStatus.COMPLETED })}
                     className="flex-1 px-4 py-2 text-red-600 text-[10px] font-black uppercase bg-red-50 rounded-xl"
                   >
                     Decline
                   </button>
-                  <button 
+                  <button
                     onClick={() => acceptBooking(item.id)}
                     className="flex-[2] px-6 py-2 bg-teal-600 text-white text-[10px] font-black uppercase rounded-xl shadow-lg shadow-teal-100"
                   >
@@ -216,7 +237,7 @@ const AdminDashboard: React.FC = () => {
                   </td>
                   <td className="px-8 py-6 text-right">
                     {isToday && item.status !== QueueStatus.COMPLETED && (
-                      <button 
+                      <button
                         onClick={() => handleUpdateStage(item)}
                         className="px-4 py-2 bg-white border-2 border-slate-100 text-slate-900 font-black text-[10px] uppercase rounded-xl shadow-sm"
                       >

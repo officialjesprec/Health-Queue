@@ -1,14 +1,24 @@
-
-import React from 'react';
+import React, { useEffect } from 'react';
 import { useQueue } from '../store/QueueContext';
+import { useAuth } from '../hooks/useAuth';
 import { QueueStatus } from '../types';
-import { Link } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 
 const PatientDashboard: React.FC = () => {
   const { queue, user, hospitals } = useQueue();
+  const { signOut, isAuthenticated } = useAuth();
+  const navigate = useNavigate();
   const myQueue = queue.filter(q => q.phone === user?.phone);
 
+  useEffect(() => {
+    if (!isAuthenticated) {
+      navigate('/auth/login?redirect=/dashboard');
+    }
+  }, [isAuthenticated, navigate]);
+
   const getHospitalName = (id: string) => hospitals.find(h => h.id === id)?.name || 'Hospital';
+
+  if (!isAuthenticated) return null;
 
   return (
     <div className="max-w-4xl mx-auto space-y-8 py-4">
@@ -16,6 +26,9 @@ const PatientDashboard: React.FC = () => {
         <div className="text-center md:text-left">
           <h1 className="text-3xl font-black mb-2">Hello, {user?.fullName || 'Guest'}</h1>
           <p className="text-teal-100 font-medium">Manage your hospital medical cards and appointments.</p>
+          <button onClick={() => signOut()} className="text-xs font-bold text-teal-200 hover:text-white underline mt-2">
+            Not you? Sign Out
+          </button>
         </div>
         <div className="bg-white/10 backdrop-blur-md rounded-2xl p-4 border border-white/20 text-center">
           <p className="text-[10px] uppercase font-black tracking-widest mb-1">Active Bookings</p>
@@ -30,12 +43,12 @@ const PatientDashboard: React.FC = () => {
             Hospital Medical Cards
           </h2>
           <div className="grid gap-4">
-            {user?.profiles.length === 0 ? (
+            {(user?.profiles || []).length === 0 ? (
               <div className="bg-slate-100 p-8 rounded-3xl text-center border-2 border-dashed border-slate-200">
                 <p className="text-slate-500 font-medium italic">You haven't registered with any hospitals yet.</p>
               </div>
             ) : (
-              user?.profiles.map(profile => (
+              (user?.profiles || []).map(profile => (
                 <div key={profile.hospitalId} className="bg-white p-5 rounded-3xl border border-slate-200 shadow-sm flex justify-between items-center">
                   <div>
                     <h3 className="font-bold text-slate-900">{getHospitalName(profile.hospitalId)}</h3>
@@ -58,10 +71,10 @@ const PatientDashboard: React.FC = () => {
           <div className="grid gap-4">
             {myQueue.length === 0 ? (
               <Link to="/" className="block p-8 bg-slate-100 rounded-3xl text-center border-2 border-dashed border-slate-200 hover:border-teal-500 transition-colors">
-                <p className="text-slate-500 font-medium">No bookings found. <br/><span className="text-teal-600 font-bold">Book an appointment now</span></p>
+                <p className="text-slate-500 font-medium">No bookings found. <br /><span className="text-teal-600 font-bold">Book an appointment now</span></p>
               </Link>
             ) : (
-              myQueue.sort((a,b) => b.timestamp - a.timestamp).map(item => (
+              myQueue.sort((a, b) => b.timestamp - a.timestamp).map(item => (
                 <Link to={`/status/${item.id}`} key={item.id} className="bg-white p-5 rounded-3xl border border-slate-200 shadow-sm hover:border-teal-500 transition-all flex items-center gap-4">
                   <div className="w-12 h-12 bg-slate-50 rounded-2xl flex items-center justify-center font-black text-slate-900">
                     {item.ticketId.split('-')[1]}

@@ -2,11 +2,15 @@
 import React from 'react';
 import { useParams, Link, useNavigate } from 'react-router-dom';
 import { useQueue } from '../store/QueueContext';
+import { useAuth } from '../hooks/useAuth';
+import { supabase } from '../lib/supabase';
+import toast from 'react-hot-toast';
 
 const AdminLogin: React.FC = () => {
   const { hospitalId } = useParams();
   const navigate = useNavigate();
   const { hospitals } = useQueue();
+  const { signIn } = useAuth();
   const hospital = hospitals.find(h => h.id === hospitalId);
 
   if (!hospital) {
@@ -41,27 +45,55 @@ const AdminLogin: React.FC = () => {
           </div>
         </div>
 
-        <form className="space-y-4 text-left" onSubmit={(e) => { e.preventDefault(); navigate(`/admin/${hospitalId}/dashboard`); }}>
+        <form className="space-y-4 text-left" onSubmit={async (e) => {
+          e.preventDefault();
+          const email = (e.currentTarget.elements.namedItem('email') as HTMLInputElement).value;
+          const password = (e.currentTarget.elements.namedItem('password') as HTMLInputElement).value;
+
+          try {
+            const { error } = await signIn(email, password);
+            if (error) throw error;
+
+            // Verify staff access
+            const { data: staff, error: staffError } = await supabase
+              .from('staff')
+              .select('role')
+              .eq('hospital_id', hospitalId)
+              .eq('id', (await supabase.auth.getUser()).data.user?.id)
+              .single();
+
+            if (staffError || !staff) {
+              await supabase.auth.signOut();
+              throw new Error('You are not authorized to access this hospital portal.');
+            }
+
+            navigate(`/admin/${hospitalId}/dashboard`);
+          } catch (err: any) {
+            toast.error(err.message || 'Login failed');
+          }
+        }}>
           <div>
-            <label className="block text-[10px] font-black uppercase text-slate-400 mb-1.5 ml-1">Staff Access Code</label>
-            <input 
-              type="text" 
-              placeholder="e.g. LUTH-STF-001" 
-              className="w-full p-4 bg-slate-50 border-2 border-slate-100 rounded-2xl outline-none focus:border-teal-500 transition-all font-mono"
-              defaultValue={`STAFF-${hospitalId.toUpperCase().replace('H-', '')}-123`}
+            <label className="block text-[10px] font-black uppercase text-slate-400 mb-1.5 ml-1">Email Address</label>
+            <input
+              name="email"
+              type="email"
+              required
+              placeholder="admin@hospital.com"
+              className="w-full p-4 bg-slate-50 border-2 border-slate-100 rounded-2xl outline-none focus:border-teal-500 transition-all font-bold"
             />
           </div>
           <div>
-            <label className="block text-[10px] font-black uppercase text-slate-400 mb-1.5 ml-1">Security PIN</label>
-            <input 
-              type="password" 
-              placeholder="••••" 
-              className="w-full p-4 bg-slate-50 border-2 border-slate-100 rounded-2xl outline-none focus:border-teal-500 transition-all text-center tracking-widest"
-              defaultValue="1234"
+            <label className="block text-[10px] font-black uppercase text-slate-400 mb-1.5 ml-1">Password</label>
+            <input
+              name="password"
+              type="password"
+              required
+              placeholder="••••••••"
+              className="w-full p-4 bg-slate-50 border-2 border-slate-100 rounded-2xl outline-none focus:border-teal-500 transition-all font-bold"
             />
           </div>
-          
-          <button 
+
+          <button
             type="submit"
             className="w-full py-5 bg-slate-900 text-white font-black rounded-2xl shadow-xl shadow-slate-200 hover:bg-slate-800 active:scale-[0.98] transition-all mt-4"
           >
