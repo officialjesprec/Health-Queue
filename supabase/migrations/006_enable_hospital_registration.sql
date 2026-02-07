@@ -17,7 +17,7 @@ BEGIN
     id,
     hospital_id,
     role,
-    name,
+    full_name,
     email
   )
   SELECT
