@@ -1,0 +1,7 @@
+{
+  "name": "Health Queue Copy",
+  "description": "A digitalized hospital queuing system designed to reduce wait times and improve patient flow in Nigerian healthcare facilities.",
+  "requestFramePermissions": [
+    "camera"
+  ]
+}
