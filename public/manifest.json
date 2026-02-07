@@ -1,0 +1,33 @@
+{
+    "name": "HealthQueue - Healthcare Without The Waiting",
+    "short_name": "HealthQueue",
+    "description": "Skip the waiting room. Book appointments, track your queue position in real-time, and get treated faster.",
+    "start_url": "/",
+    "display": "standalone",
+    "background_color": "#F0FDFA",
+    "theme_color": "#0891B2",
+    "orientation": "portrait-primary",
+    "icons": [
+        {
+            "src": "/favicon.svg",
+            "sizes": "any",
+            "type": "image/svg+xml",
+            "purpose": "any maskable"
+        },
+        {
+            "src": "/favicon-16x16.svg",
+            "sizes": "16x16",
+            "type": "image/svg+xml"
+        },
+        {
+            "src": "/favicon-32x32.svg",
+            "sizes": "32x32",
+            "type": "image/svg+xml"
+        },
+        {
+            "src": "/apple-touch-icon.svg",
+            "sizes": "180x180",
+            "type": "image/svg+xml"
+        }
+    ]
+}

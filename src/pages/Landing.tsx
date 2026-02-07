@@ -1,7 +1,8 @@
 import React from 'react';
 import { Link } from 'react-router-dom';
 import { useAuth } from '../hooks/useAuth';
-import { ArrowRight, Heart, Clock, Bell, Shield } from 'lucide-react';
+import { ArrowRight, Clock, Bell, Shield, Heart } from 'lucide-react';
+import { Logo } from '../components/Logo';
 
 const Landing: React.FC = () => {
     const { isAuthenticated } = useAuth();
@@ -13,8 +14,7 @@ const Landing: React.FC = () => {
                 <div className="container-custom py-4">
                     <div className="flex items-center justify-between">
                         <Link to="/" className="flex items-center gap-2">
-                            <Heart className="w-8 h-8 text-primary-600" />
-                            <span className="text-2xl font-black text-primary-900">Health<span className="text-success-600">Queue</span></span>
+                            <Logo variant="full" width={48} height={48} showText={true} />
                         </Link>
                         <div className="flex items-center gap-4">
                             {!isAuthenticated ? (
@@ -135,8 +135,7 @@ const Landing: React.FC = () => {
                     <div className="grid md:grid-cols-4 gap-8">
                         <div>
                             <div className="flex items-center gap-2 mb-4">
-                                <Heart className="w-6 h-6 text-success-500" />
-                                <span className="text-xl font-black">HealthQueue</span>
+                                <Logo variant="icon" width={40} height={40} />
                             </div>
                             <p className="text-slate-400">Making healthcare accessible and efficient for everyone</p>
                         </div>

@@ -1,0 +1,28 @@
+<svg width="512" height="512" viewBox="0 0 512 512" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <!-- Background with subtle gradient -->
+  <rect width="512" height="512" rx="96" fill="#F0FDFA"/>
+  
+  <!-- Medical Cross - Bold and Clear -->
+  <g transform="translate(256, 256)">
+    <!-- Vertical bar -->
+    <rect x="-40" y="-140" width="80" height="280" rx="20" fill="#0891B2"/>
+    
+    <!-- Horizontal bar -->
+    <rect x="-140" y="-40" width="280" height="80" rx="20" fill="#0891B2"/>
+    
+    <!-- Center circle accent -->
+    <circle cx="0" cy="0" r="50" fill="#22C55E"/>
+    
+    <!-- Inner white checkmark or pulse dot -->
+    <circle cx="0" cy="0" r="25" fill="white"/>
+  </g>
+  
+  <!-- Subtle pulse wave at bottom -->
+  <path d="M80 420 L120 420 L160 380 L200 460 L240 400 L280 420 L432 420" 
+        stroke="#22D3EE" 
+        stroke-width="12" 
+        stroke-linecap="round" 
+        stroke-linejoin="round"
+        fill="none"
+        opacity="0.6"/>
+</svg>

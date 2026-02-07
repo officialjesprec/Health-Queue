@@ -1,0 +1,11 @@
+<svg width="16" height="16" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <!-- Ultra simplified for 16x16 -->
+  <rect width="16" height="16" rx="3" fill="#F0FDFA"/>
+  
+  <!-- Medical Cross - Very Bold -->
+  <rect x="6.5" y="3" width="3" height="10" rx="0.5" fill="#0891B2"/>
+  <rect x="3" y="6.5" width="10" height="3" rx="0.5" fill="#0891B2"/>
+  
+  <!-- Center dot -->
+  <circle cx="8" cy="8" r="1.8" fill="#22C55E"/>
+</svg>

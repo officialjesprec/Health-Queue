@@ -2,7 +2,7 @@ import React, { useEffect } from 'react';
 import { Link, useLocation } from 'react-router-dom';
 import { useAuth } from '../hooks/useAuth';
 import { useQueue } from '../store/QueueContext';
-import { Heart } from 'lucide-react';
+import { Logo } from './Logo';
 
 const Layout: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const location = useLocation();
@@ -42,10 +42,7 @@ const Layout: React.FC<{ children: React.ReactNode }> = ({ children }) => {
         <div className="container-custom">
           <div className="h-16 flex items-center justify-between">
             <Link to="/" className="flex items-center gap-2">
-              <Heart className="w-8 h-8 text-primary-600" />
-              <span className="text-2xl font-black text-primary-900">
-                Health<span className="text-success-600">Queue</span>
-              </span>
+              <Logo variant="full" width={48} height={48} showText={true} />
             </Link>
 
             <nav className="flex items-center gap-4">
@@ -95,8 +92,7 @@ const Layout: React.FC<{ children: React.ReactNode }> = ({ children }) => {
         <div className="container-custom">
           <div className="text-center space-y-4">
             <div className="flex items-center justify-center gap-2">
-              <Heart className="w-6 h-6 text-success-500" />
-              <span className="text-xl font-black">HealthQueue</span>
+              <Logo variant="icon" width={40} height={40} />
             </div>
             <p className="text-slate-400">Making healthcare accessible and efficient for everyone</p>
             <div className="flex justify-center gap-6 text-sm text-slate-400">

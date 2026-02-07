@@ -1,0 +1,26 @@
+<svg width="180" height="180" viewBox="0 0 180 180" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <!-- Background -->
+  <rect width="180" height="180" rx="32" fill="#F0FDFA"/>
+  
+  <!-- Medical Cross -->
+  <g transform="translate(90, 90)">
+    <!-- Vertical bar -->
+    <rect x="-14" y="-50" width="28" height="100" rx="7" fill="#0891B2"/>
+    
+    <!-- Horizontal bar -->
+    <rect x="-50" y="-14" width="100" height="28" rx="7" fill="#0891B2"/>
+    
+    <!-- Center circle -->
+    <circle cx="0" cy="0" r="18" fill="#22C55E"/>
+    <circle cx="0" cy="0" r="9" fill="white"/>
+  </g>
+  
+  <!-- Pulse wave -->
+  <path d="M28 148 L42 148 L56 133 L70 163 L84 140 L98 148 L152 148" 
+        stroke="#22D3EE" 
+        stroke-width="4" 
+        stroke-linecap="round" 
+        stroke-linejoin="round"
+        fill="none"
+        opacity="0.6"/>
+</svg>
