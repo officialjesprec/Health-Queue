@@ -1,20 +1,50 @@
-<div align="center">
-<img width="1200" height="475" alt="GHBanner" src="https://github.com/user-attachments/assets/0aa67016-6eaf-458a-adb2-6e31a0763ed6" />
-</div>
+# HealthQueue - Modern Healthcare Queue Management
 
-# Run and deploy your AI Studio app
+HealthQueue is a comprehensive system designed to streamline patient intake and queue management in hospitals, reducing waiting times and improving administrative efficiency for healthcare providers.
 
-This contains everything you need to run your app locally.
+## Features
 
-View your app in AI Studio: https://ai.studio/apps/drive/1JALIeNUIYsFEPdKjsSI1L4DwLxs4fQii
+- **For Patients:**
+  - Easy online booking and registration
+  - Real-time queue status tracking
+  - Digital medical card management
+  - Push notifications for appointments
 
-## Run Locally
+- **For Hospitals:**
+  - Complete admin dashboard
+  - Role-based access for staff (Doctors, Nurses, Pharmacists)
+  - Department-specific queue management
+  - Patient journey tracking (Check-in → Triage → Doctor → Pharmacy)
 
-**Prerequisites:**  Node.js
+## Tech Stack
 
+- **Frontend:** React + Vite + TypeScript + TailwindCSS
+- **Backend:** Supabase (PostgreSQL, Auth, Realtime)
+- **Deployment:** Vercel
+
+## Configuration
+
+This project requires a Supabase backend. Set up the following environment variables:
+
+```env
+VITE_SUPABASE_URL=your_supabase_url
+VITE_SUPABASE_ANON_KEY=your_supabase_anon_key
+```
+
+## Running Locally
 
 1. Install dependencies:
-   `npm install`
-2. Set the `GEMINI_API_KEY` in [.env.local](.env.local) to your Gemini API key
-3. Run the app:
-   `npm run dev`
+   ```bash
+   npm install
+   ```
+
+2. Run the development server:
+   ```bash
+   npm run dev
+   ```
+
+3. Open `http://localhost:3000`
+
+## Deployment
+
+Pushes to the `main` branch automatically deploy to Vercel.
