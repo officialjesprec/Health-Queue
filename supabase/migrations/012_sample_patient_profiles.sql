@@ -1,24 +1,36 @@
 -- Migration: Sample Patient Profiles
--- Description: Adds dummy patients and their medical cards (profiles) to the hospitals.
+-- Description: Automatically links the most recent user to all 6 dummy hospitals.
 -- Created: 2026-02-09
 
--- 1. Create a dummy patient user in public.users if not exists
--- (Note: In a real app, these would be linked to auth.users, but for seeding 
--- public.users data for the dashboard to show, we can add them here)
--- Actually, hospital_profiles needs user_id which refs public.users(id)
--- and public.users(id) refs auth.users(id).
--- So seeding patients is slightly complex without auth users.
+DO $$
+DECLARE
+    target_user_id UUID;
+    hospital_record RECORD;
+BEGIN
+    -- 1. Find the latest registered user
+    SELECT id INTO target_user_id FROM public.users ORDER BY created_at DESC LIMIT 1;
 
--- Instead, let's create a few dummy 'hospital_profiles' for any existing users 
--- or just ensure the hospitals have 'staff' so the admins can log in.
-
--- The user specifically asked for "profiles for our dummy hospital samples".
--- This strongly implies 'hospital_profiles' records.
-
--- Let's create a function that a user can call or just seed some if we have a target user.
--- Since we don't, I'll provide a SQL snippet in a new file for the user to run.
-
--- Wait, I can try to find the current user's ID if I have any logs or if I can use MCP.
--- Since MCP failed, I'll just create the migration with a comment.
-
--- Actually, let's look at 011_add_email_to_staff.sql to see previous logic.
+    IF target_user_id IS NOT NULL THEN
+        -- 2. Loop through the 6 dummy hospitals and create profiles
+        FOR hospital_record IN 
+            SELECT id FROM public.hospitals 
+            WHERE id IN (
+                'a1b2c3d4-e5f6-7890-ab12-cd34ef567890',
+                'b2c3d4e5-f6a7-8901-bc23-de45ef678901',
+                'c3d4e5f6-a7b8-9012-cd34-ef56ab789012',
+                'd4e5f6a7-b8c9-0123-de45-fa67bc890123',
+                'e5f6a7b8-c9d0-1234-ef56-ab78cd901234',
+                'f6a7b8c9-d0e1-2345-af67-bc89de012345'
+            )
+        LOOP
+            INSERT INTO public.hospital_profiles (user_id, hospital_id, card_id, is_paid)
+            VALUES (
+                target_user_id, 
+                hospital_record.id, 
+                'MED-' || floor(random() * (999999-100000+1) + 100000)::text,
+                true
+            )
+            ON CONFLICT (user_id, hospital_id) DO NOTHING;
+        END LOOP;
+    END IF;
+END $$;
