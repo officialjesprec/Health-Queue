@@ -43,19 +43,26 @@ const HospitalSignup: React.FC = () => {
 
         try {
             // Sign up the user
-            const { error: signUpError } = await signUp(form.email, form.password, {
+            const { data, error: signUpError } = await signUp(form.email, form.password, {
                 fullName: form.fullName, // Admin Name
                 phone: form.phone,
                 role: 'hospital_admin', // Optional: Tag metadata for future use
                 hospitalNameInitial: form.hospitalName
-            });
+            } as any);
 
             if (signUpError) throw signUpError;
 
-            toast.success('Admin account created! Please sign in.');
-
-            // Redirect to Login with the same redirect param
-            navigate(`/hospital/login?redirect=${encodeURIComponent(redirectPath)}&email=${encodeURIComponent(form.email)}`);
+            // Auto-login after signup (Supabase 2.0+ auto-confirms email in development)
+            if (data.session) {
+                // User is already logged in
+                toast.success('Account created! Now register your hospital.');
+                // Redirect directly to hospital registration
+                navigate('/register-hospital');
+            } else {
+                // Email confirmation required
+                toast.success('Account created! Please check your email to confirm, then login.');
+                navigate(`/hospital/login?redirect=/register-hospital&email=${encodeURIComponent(form.email)}`);
+            }
 
         } catch (err: any) {
             console.error('Hospital Signup Error:', err);
