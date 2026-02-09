@@ -29,7 +29,7 @@ export const MEDICAL_TERMS_SIMPLE: Record<string, string> = {
 
 export const HOSPITALS: Hospital[] = [
   {
-    id: 'h1',
+    id: 'a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a11',
     name: 'Lagos University Teaching Hospital (LUTH)',
     location: 'Idi-Araba, Lagos',
     departments: ['OPD', 'Dental', 'Antenatal', 'Lab', 'Radiotherapy'],
@@ -44,7 +44,7 @@ export const HOSPITALS: Hospital[] = [
     registrationFee: 2500
   },
   {
-    id: 'h2',
+    id: 'b0eebc99-9c0b-4ef8-bb6d-6bb9bd380a22',
     name: 'Ilorin General Hospital',
     location: 'Ilorin, Kwara State',
     departments: ['OPD', 'Pediatrics', 'Pharmacy', 'Surgery'],
@@ -58,7 +58,7 @@ export const HOSPITALS: Hospital[] = [
     registrationFee: 1500
   },
   {
-    id: 'h3',
+    id: 'c0eebc99-9c0b-4ef8-bb6d-6bb9bd380a33',
     name: 'Reddington Hospital',
     location: 'Victoria Island, Lagos',
     departments: ['OPD', 'Cardiology', 'Emergency', 'Diagnostics'],
@@ -81,7 +81,7 @@ export const INITIAL_QUEUE: QueueItem[] = [
     ticketId: 'HQ-101',
     status: QueueStatus.IN_PROGRESS,
     stage: JourneyStage.DOCTOR,
-    hospitalId: 'h1',
+    hospitalId: 'a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a11',
     department: 'OPD',
     service: 'General Consultation',
     timeSlot: '09:00 AM',
@@ -97,7 +97,7 @@ export const INITIAL_QUEUE: QueueItem[] = [
     ticketId: 'HQ-102',
     status: QueueStatus.WAITING,
     stage: JourneyStage.TRIAGE,
-    hospitalId: 'h1',
+    hospitalId: 'a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a11',
     department: 'OPD',
     service: 'NHIS Clinic',
     timeSlot: '09:30 AM',
