@@ -85,8 +85,8 @@ const HospitalLogin: React.FC = () => {
             const staff = staffData as any;
             if (searchParams.get('redirect')) {
                 navigate(searchParams.get('redirect')!);
-            } else if (staff.role === 'admin' && staff.hospital_id) {
-                navigate(`/admin/${staff.hospital_id}/dashboard`);
+            } else if (staff.role === 'admin') {
+                navigate('/admin/dashboard');
             } else {
                 navigate('/staff/dashboard');
             }
@@ -142,8 +142,8 @@ const HospitalLogin: React.FC = () => {
                     </Link>
 
                     <div className="mb-10">
-                        <h1 className="text-3xl font-black text-slate-900 mb-3">Admin Portal Login</h1>
-                        <p className="text-slate-500 font-medium">Access your hospital dashboard and manage queues.</p>
+                        <h1 className="text-3xl font-black text-slate-900 mb-3">Admin Login</h1>
+                        <p className="text-slate-500 font-medium">Access your administrative dashboard and manage facility queues.</p>
                     </div>
 
                     {error && (

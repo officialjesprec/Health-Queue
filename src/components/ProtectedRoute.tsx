@@ -1,6 +1,6 @@
-import React, { useEffect } from 'react';
+import React from 'react';
 import { Navigate, useLocation } from 'react-router-dom';
-import { useAuth, useIsStaff, useIsAdmin } from '../hooks/useAuth';
+import { useAuth } from '../hooks/useAuth';
 
 interface ProtectedRouteProps {
     children: React.ReactNode;
@@ -8,12 +8,20 @@ interface ProtectedRouteProps {
 }
 
 const ProtectedRoute: React.FC<ProtectedRouteProps> = ({ children, allowedRoles }) => {
-    const { user, loading: authLoading, isAuthenticated } = useAuth();
-    const { isStaff, staffData, loading: staffLoading } = useIsStaff();
-    const { isAdmin, adminData, loading: adminLoading } = useIsAdmin();
+    const {
+        loading,
+        isAuthenticated,
+        isAdmin,
+        adminData,
+        isStaff,
+        staffData,
+        adminLoading,
+        staffLoading
+    } = useAuth();
     const location = useLocation();
 
-    if (authLoading || staffLoading || adminLoading) {
+    // Show loading if any auth-related data is pending
+    if (loading || adminLoading || staffLoading) {
         return (
             <div className="min-h-screen flex items-center justify-center bg-healthcare-bg">
                 <div className="text-center">
