@@ -43,17 +43,16 @@ const HospitalSignup: React.FC = () => {
 
         try {
             // Sign up the user
-            const { data, error: signUpError } = await signUp(form.email, form.password, {
+            // useAuth.signUp returns the data { user, session } directly, or throws error
+            const { session } = await signUp(form.email, form.password, {
                 fullName: form.fullName, // Admin Name
                 phone: form.phone,
                 role: 'hospital_admin', // Optional: Tag metadata for future use
                 hospitalNameInitial: form.hospitalName
             } as any);
 
-            if (signUpError) throw signUpError;
-
             // Auto-login after signup (Supabase 2.0+ auto-confirms email in development)
-            if (data.session) {
+            if (session) {
                 // User is already logged in
                 toast.success('Account created! Now register your hospital.');
                 // Redirect directly to hospital registration

@@ -54,8 +54,18 @@ const HospitalLogin: React.FC = () => {
             navigate(redirectPath);
         } catch (err: any) {
             console.error('Hospital Login Error:', err);
-            setError('Invalid credentials. Please check your email and password.');
-            toast.error('Login failed');
+
+            let message = 'Login failed. Please try again.';
+            if (err.message === 'Invalid login credentials') {
+                message = 'Invalid email or password.';
+            } else if (err.message.includes('Email not confirmed')) {
+                message = 'Please check your email to confirm your account.';
+            } else {
+                message = err.message || message;
+            }
+
+            setError(message);
+            toast.error(message);
         } finally {
             setLoading(false);
         }
