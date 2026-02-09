@@ -167,6 +167,27 @@ This document contains a complete summary of all changes made to the Health Queu
 
 ---
 
+### **Issue #8 - Hospital Signup Redirect Loop/Staff Creation Failure**
+**Status:** ✅ FIXED
+
+**Problem:** Users creating hospital accounts could not log in to the staff dashboard ("incorrect details") because the staff record was never created.
+
+**Root Cause:**
+- Hospital signup redirected to login page (`/hospital/login`) instead of hospital registration (`/register-hospital`)
+- Staff records are created by a database trigger ONLY when a hospital is inserted
+- Since users skipped hospital registration, no staff record was created
+
+**Solution:**
+- Updated logic to auto-login user after signup
+- Changed redirect to go directly to `/register-hospital`
+- Ensures flow: Signup -> Register Hospital -> Trigger Fires -> Staff Created
+
+**Files Changed:**
+- `src/pages/auth/HospitalSignup.tsx`
+- `HOSPITAL_SIGNUP_FIX.md` (Created)
+
+---
+
 ## ✨ **NEW FEATURES ADDED**
 
 ### **1. Dedicated Hospital Browsing Page**
