@@ -34,7 +34,8 @@ const CaregiverView = React.lazy(() => import('./pages/CaregiverView'));
 const PatientLogin = React.lazy(() => import('./pages/auth/PatientLogin'));
 const PatientSignup = React.lazy(() => import('./pages/auth/PatientSignup'));
 const HospitalLogin = React.lazy(() => import('./pages/auth/HospitalLogin'));
-const HospitalSignup = React.lazy(() => import('./pages/auth/HospitalSignup'));
+const HospitalSignup = React.lazy(() => import('./pages/auth/AdminSignup')); // Redirected name
+const AdminSignup = React.lazy(() => import('./pages/auth/AdminSignup'));
 
 const App: React.FC = () => {
   return (
@@ -56,7 +57,8 @@ const App: React.FC = () => {
                 <Route path="/auth/signup" element={<PatientSignup />} />
 
                 {/* Hospital Auth Routes */}
-                <Route path="/hospital/signup" element={<HospitalSignup />} />
+                <Route path="/hospital/signup" element={<AdminSignup />} />
+                <Route path="/admin/signup" element={<AdminSignup />} />
                 <Route path="/hospital/login" element={<HospitalLogin />} />
 
                 {/* Staff Auth Routes */}
@@ -85,6 +87,14 @@ const App: React.FC = () => {
                   path="/admin/:hospitalId/dashboard"
                   element={
                     <ProtectedRoute allowedRoles={['admin']}>
+                      <AdminDashboard />
+                    </ProtectedRoute>
+                  }
+                />
+                <Route
+                  path="/admin/dashboard"
+                  element={
+                    <ProtectedRoute allowedRoles={['admin', 'hospital_admin']}>
                       <AdminDashboard />
                     </ProtectedRoute>
                   }

@@ -1,6 +1,6 @@
 import React, { useEffect } from 'react';
 import { Navigate, useLocation } from 'react-router-dom';
-import { useAuth, useIsStaff } from '../hooks/useAuth';
+import { useAuth, useIsStaff, useIsAdmin } from '../hooks/useAuth';
 
 interface ProtectedRouteProps {
     children: React.ReactNode;
@@ -10,9 +10,10 @@ interface ProtectedRouteProps {
 const ProtectedRoute: React.FC<ProtectedRouteProps> = ({ children, allowedRoles }) => {
     const { user, loading: authLoading, isAuthenticated } = useAuth();
     const { isStaff, staffData, loading: staffLoading } = useIsStaff();
+    const { isAdmin, adminData, loading: adminLoading } = useIsAdmin();
     const location = useLocation();
 
-    if (authLoading || staffLoading) {
+    if (authLoading || staffLoading || adminLoading) {
         return (
             <div className="min-h-screen flex items-center justify-center bg-healthcare-bg">
                 <div className="text-center">
@@ -33,14 +34,22 @@ const ProtectedRoute: React.FC<ProtectedRouteProps> = ({ children, allowedRoles 
 
     // Role-based authorization
     if (allowedRoles && allowedRoles.length > 0) {
-        const userRole = isStaff ? (staffData?.role === 'admin' ? 'admin' : 'staff') : 'patient';
+        const userRole = isAdmin ? 'admin' : (isStaff ? (staffData?.role === 'admin' ? 'admin' : 'staff') : 'patient');
 
         if (!allowedRoles.includes(userRole)) {
             // User is authenticated but doesn't have the right role
             // Redirect to their appropriate dashboard
-            const dashboardPath = isStaff
-                ? (staffData?.role === 'admin' ? `/admin/${staffData.hospital_id}/dashboard` : '/staff/dashboard')
-                : '/dashboard';
+            let dashboardPath = '/dashboard';
+
+            if (isAdmin) {
+                dashboardPath = adminData?.hospital_id
+                    ? `/admin/${adminData.hospital_id}/dashboard`
+                    : '/admin/dashboard';
+            } else if (isStaff) {
+                dashboardPath = staffData?.role === 'admin'
+                    ? `/admin/${staffData.hospital_id}/dashboard`
+                    : '/staff/dashboard';
+            }
 
             return <Navigate to={dashboardPath} replace />;
         }

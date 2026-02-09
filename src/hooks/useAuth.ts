@@ -144,6 +144,46 @@ export function useIsPatient() {
     return { isPatient, loading };
 }
 
+// Hook for checking if user is an Admin (using NEW admins table)
+export function useIsAdmin() {
+    const { user } = useAuth();
+    const [isAdmin, setIsAdmin] = useState(false);
+    const [adminData, setAdminData] = useState<any>(null);
+    const [loading, setLoading] = useState(true);
+
+    useEffect(() => {
+        const checkAdmin = async () => {
+            if (!user) {
+                setIsAdmin(false);
+                setAdminData(null);
+                setLoading(false);
+                return;
+            }
+
+            try {
+                const { data, error } = await supabase
+                    .from('admins')
+                    .select('*')
+                    .eq('id', user.id)
+                    .maybeSingle();
+
+                if (error) throw error;
+                setIsAdmin(!!data);
+                setAdminData(data);
+            } catch (err) {
+                console.error('Error checking admin status:', err);
+                setIsAdmin(false);
+            } finally {
+                setLoading(false);
+            }
+        };
+
+        checkAdmin();
+    }, [user]);
+
+    return { isAdmin, adminData, loading };
+}
+
 // Hook for checking if user is staff
 export function useIsStaff() {
     const { user } = useAuth();
@@ -164,7 +204,7 @@ export function useIsStaff() {
                 .from('staff')
                 .select('*')
                 .eq('id', user.id)
-                .single();
+                .maybeSingle();
 
             setIsStaff(!!data);
             setStaffData(data);

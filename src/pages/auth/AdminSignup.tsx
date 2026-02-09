@@ -4,7 +4,7 @@ import { useAuth } from '../../hooks/useAuth';
 import { Building, Mail, Lock, Phone, AlertCircle, Loader2, ArrowLeft, Eye, EyeOff, Stethoscope } from 'lucide-react';
 import toast from 'react-hot-toast';
 
-const HospitalSignup: React.FC = () => {
+const AdminSignup: React.FC = () => {
     const navigate = useNavigate();
     const location = useLocation();
     const { signUp } = useAuth();
@@ -12,7 +12,7 @@ const HospitalSignup: React.FC = () => {
 
     // Get redirect path
     const searchParams = new URLSearchParams(location.search);
-    const redirectPath = searchParams.get('redirect') || '/register-hospital';
+    const redirectPath = searchParams.get('redirect') || '/admin/dashboard';
 
     const [showPassword, setShowPassword] = useState(false);
     const [form, setForm] = useState({
@@ -42,28 +42,26 @@ const HospitalSignup: React.FC = () => {
 
         try {
             // Sign up the user
-            // useAuth.signUp returns the data { user, session } directly, or throws error
             const { session } = await signUp(form.email, form.password, {
                 fullName: form.fullName, // Admin Name
                 phone: form.phone,
-                role: 'hospital_admin', // Optional: Tag metadata for future use
+                role: 'admin', // Explicitly 'admin' as requested
             } as any);
 
-            // Auto-login after signup (Supabase 2.0+ auto-confirms email in development)
             if (session) {
                 // User is already logged in
-                toast.success('Account created! Now register your hospital.');
-                // Redirect directly to hospital registration
-                navigate('/register-hospital');
+                toast.success('Account created! Welcome, Admin.');
+                // Redirect directly to admin dashboard
+                navigate('/admin/dashboard');
             } else {
                 // Email confirmation required
                 toast.success('Account created! Please check your email to confirm, then login.');
-                navigate(`/hospital/login?redirect=/register-hospital&email=${encodeURIComponent(form.email)}`);
+                navigate(`/hospital/login?redirect=/admin/dashboard&email=${encodeURIComponent(form.email)}`);
             }
 
         } catch (err: any) {
-            console.error('Hospital Signup Error:', err);
-            setError(err.message || 'Failed to create hospital account. Please try again.');
+            console.error('Admin Signup Error:', err);
+            setError(err.message || 'Failed to create admin account. Please try again.');
             toast.error(err.message || 'Signup failed');
         } finally {
             setLoading(false);
@@ -113,8 +111,8 @@ const HospitalSignup: React.FC = () => {
                     </Link>
 
                     <div className="mb-10">
-                        <h1 className="text-3xl font-black text-slate-900 mb-3">Partner Registration</h1>
-                        <p className="text-slate-500 font-medium">Create your administrative account to register your hospital.</p>
+                        <h1 className="text-3xl font-black text-slate-900 mb-3">Admin Signup</h1>
+                        <p className="text-slate-500 font-medium">Create your administrative account to manage your hospital.</p>
                     </div>
 
                     {error && (
@@ -226,9 +224,12 @@ const HospitalSignup: React.FC = () => {
 
                     <p className="text-center text-slate-500 font-medium mt-8 text-sm">
                         Already have an account?{' '}
-                        <Link to="/hospital/login" className="text-teal-600 font-bold hover:underline">
+                        <button
+                            onClick={() => navigate('/hospital/login')}
+                            className="text-teal-600 font-bold hover:underline"
+                        >
                             Sign In
-                        </Link>
+                        </button>
                     </p>
                 </div>
             </div>
@@ -236,4 +237,4 @@ const HospitalSignup: React.FC = () => {
     );
 };
 
-export default HospitalSignup;
+export default AdminSignup;

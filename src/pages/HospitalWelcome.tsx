@@ -55,10 +55,10 @@ const HospitalWelcome: React.FC = () => {
                                     Admin Sign In
                                 </Link>
                                 <Link
-                                    to="/hospital/signup"
+                                    to="/admin/signup"
                                     className="block w-full py-4 text-center bg-white border-2 border-slate-100 text-slate-700 font-bold rounded-xl hover:border-teal-600 hover:text-teal-600 transition-all"
                                 >
-                                    Register New Hospital
+                                    Register as an Admin
                                 </Link>
                             </div>
                         </div>

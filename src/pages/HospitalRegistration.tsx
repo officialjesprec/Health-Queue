@@ -77,12 +77,26 @@ const HospitalRegistration: React.FC = () => {
 
       if (data) {
         const hospital = data as any;
+
+        // --- NEW: Automatically make the current user the Admin for this hospital ---
+        const { error: staffError } = await supabase
+          .from('staff')
+          .insert({
+            id: user.id,
+            hospital_id: hospital.id,
+            full_name: user.user_metadata?.full_name || 'Hospital Admin',
+            role: 'admin',
+            email: user.email
+          } as any);
+
+        if (staffError) {
+          console.error('Failed to create admin staff record:', staffError);
+          // We don't block the whole flow, but we should log it
+        }
+
         setRegisteredHospital(hospital);
         toast.success('Hospital registered successfully!', { duration: 4000 });
         setShowSuccessModal(true);
-
-        // Navigation will now be handled by the modal's "Go to Dashboard" button or a timeout
-        // But we'll keep the console log for IT
         console.log('📧 Hospital ID:', hospital.id);
       }
     } catch (err: any) {
@@ -308,27 +322,12 @@ const HospitalRegistration: React.FC = () => {
               </div>
             </div>
 
-            <div className="grid grid-cols-2 gap-4">
-              <button
-                onClick={() => setShowSuccessModal(false)}
-                className="py-4 bg-slate-50 text-slate-500 rounded-2xl font-black text-sm hover:bg-slate-100 transition-all"
-              >
-                Wait, not yet
-              </button>
-              <button
-                onClick={() => {
-                  navigate('/staff/dashboard', {
-                    state: {
-                      newHospitalId: registeredHospital.id,
-                      hospitalName: registeredHospital.name
-                    }
-                  });
-                }}
-                className="py-4 bg-teal-600 text-white rounded-2xl font-black text-sm shadow-xl shadow-teal-100 hover:bg-teal-700 active:scale-95 transition-all flex items-center justify-center gap-2"
-              >
-                Manage Staff <ArrowRight className="w-4 h-4" />
-              </button>
-            </div>
+            <button
+              onClick={() => navigate(`/admin/${registeredHospital.id}/dashboard`)}
+              className="py-4 bg-teal-600 text-white rounded-2xl font-black text-sm shadow-xl shadow-teal-100 hover:bg-teal-700 active:scale-95 transition-all flex items-center justify-center gap-2 w-full col-span-2"
+            >
+              Go to Hospital Dashboard <ArrowRight className="w-4 h-4" />
+            </button>
           </div>
         </div>
       )}
