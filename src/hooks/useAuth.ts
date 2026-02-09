@@ -50,6 +50,8 @@ export function useAuth() {
         phone: string;
         dateOfBirth?: string;
         gender?: string;
+        role?: string;
+        [key: string]: any;
     }) => {
         const { data, error } = await supabase.auth.signUp({
             email,
@@ -57,9 +59,7 @@ export function useAuth() {
             options: {
                 data: {
                     full_name: userData.fullName,
-                    phone: userData.phone,
-                    date_of_birth: userData.dateOfBirth,
-                    gender: userData.gender,
+                    ...userData, // Spread other fields like role, hospitalNameInitial
                 },
             },
         });
