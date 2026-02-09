@@ -114,8 +114,10 @@ const Layout: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   return (
     <div className="min-h-screen flex flex-col bg-healthcare-bg">
       {/* Header */}
-      <header className="bg-white border-b border-slate-200 sticky top-0 z-50 shadow-sm transition-all duration-200">
-        <div className="container-custom">
+      <header className={`border-b sticky top-0 z-50 shadow-sm transition-all duration-300 ${isStaff
+          ? 'bg-slate-900 border-slate-800 text-white'
+          : 'bg-white border-slate-200 text-slate-900'
+        }`}>        <div className="container-custom">
           <div className="h-16 flex items-center justify-between">
             {/* Logo */}
             <Link to="/" className="flex items-center gap-2 z-50 relative group">
@@ -125,19 +127,29 @@ const Layout: React.FC<{ children: React.ReactNode }> = ({ children }) => {
             {/* Desktop Navigation */}
             <div className="hidden md:flex items-center gap-8">
               {/* Main Links */}
-              {!isOnAdminPath && (
+              {!isStaff && !isOnAdminPath && (
                 <nav className="flex items-center gap-6">
                   {navLinks.map(link => (
                     <Link
                       key={link.path}
                       to={link.path}
-                      className={`text-sm font-medium transition-colors hover:text-teal-600 ${location.pathname === link.path ? 'text-teal-600 font-bold' : 'text-slate-600'
+                      className={`text-sm font-medium transition-colors hover:text-teal-400 ${location.pathname === link.path ? 'text-teal-400 font-bold' : (isStaff ? 'text-slate-300' : 'text-slate-600')
                         }`}
                     >
                       {link.name}
                     </Link>
                   ))}
                 </nav>
+              )}
+
+              {isStaff && (
+                <div className="flex items-center gap-2">
+                  <div className="px-3 py-1 bg-teal-500/10 border border-teal-500/20 rounded-full">
+                    <span className="text-[10px] font-black uppercase tracking-widest text-teal-400">
+                      Hospital Management System
+                    </span>
+                  </div>
+                </div>
               )}
 
               {/* Right Side Actions */}
@@ -164,16 +176,20 @@ const Layout: React.FC<{ children: React.ReactNode }> = ({ children }) => {
                     {/* Profile Dropdown Toggle */}
                     <button
                       onClick={() => setIsProfileOpen(!isProfileOpen)}
-                      className="flex items-center gap-2 pl-2 pr-1 py-1 rounded-full border border-slate-200 hover:border-teal-300 hover:bg-slate-50 transition-all focus:outline-none focus:ring-2 focus:ring-teal-100 group"
+                      className={`flex items-center gap-2 pl-2 pr-1 py-1 rounded-full border transition-all focus:outline-none focus:ring-2 focus:ring-teal-100 group ${isStaff
+                          ? 'border-slate-700 bg-slate-800/50 hover:bg-slate-800 hover:border-slate-600'
+                          : 'border-slate-200 hover:border-teal-300 hover:bg-slate-50'
+                        }`}
                     >
-                      <div className="w-8 h-8 rounded-full bg-teal-600 text-white flex items-center justify-center font-bold text-xs shadow-sm group-hover:scale-105 transition-transform">
+                      <div className={`w-8 h-8 rounded-full flex items-center justify-center font-bold text-xs shadow-sm group-hover:scale-105 transition-transform ${isStaff ? 'bg-teal-500 text-slate-900' : 'bg-teal-600 text-white'
+                        }`}>
                         {getInitials()}
                       </div>
                       <div className="hidden lg:block text-left mr-1">
-                        <p className="text-[10px] font-black text-slate-900 leading-none uppercase tracking-wide">{user.user_metadata?.full_name?.split(' ')[0] || 'User'}</p>
-                        <p className="text-[9px] text-slate-500 font-medium leading-none mt-0.5">{getUserRoleLabel()}</p>
+                        <p className={`text-[10px] font-black leading-none uppercase tracking-wide ${isStaff ? 'text-white' : 'text-slate-900'}`}>{user.user_metadata?.full_name?.split(' ')[0] || 'User'}</p>
+                        <p className={`text-[9px] font-medium leading-none mt-0.5 ${isStaff ? 'text-slate-400' : 'text-slate-500'}`}>{getUserRoleLabel()}</p>
                       </div>
-                      <ChevronDown className={`w-4 h-4 text-slate-400 transition-transform duration-200 ${isProfileOpen ? 'rotate-180' : ''}`} />
+                      <ChevronDown className={`w-4 h-4 transition-transform duration-200 ${isProfileOpen ? 'rotate-180' : ''} ${isStaff ? 'text-slate-500' : 'text-slate-400'}`} />
                     </button>
 
                     {/* Dropdown Menu */}
@@ -192,7 +208,7 @@ const Layout: React.FC<{ children: React.ReactNode }> = ({ children }) => {
                         <div className="space-y-1">
                           <button onClick={handleDashboardClick} className="w-full flex items-center gap-3 px-3 py-2.5 rounded-xl hover:bg-slate-50 text-slate-700 hover:text-teal-700 transition-colors text-sm font-medium">
                             <LayoutDashboard className="w-4 h-4" />
-                            Dashboard
+                            {isStaff ? (staffData?.role === 'admin' ? 'Admin Dashboard' : 'Staff Dashboard') : 'Patient Dashboard'}
                           </button>
                           {!isStaff && (
                             <Link to="/hospitals" className="w-full flex items-center gap-3 px-3 py-2.5 rounded-xl hover:bg-slate-50 text-slate-700 hover:text-teal-700 transition-colors text-sm font-medium" onClick={() => setIsProfileOpen(false)}>
@@ -256,12 +272,26 @@ const Layout: React.FC<{ children: React.ReactNode }> = ({ children }) => {
                     </div>
                     <div>
                       <p className="font-bold text-slate-900 line-clamp-1">{getDisplayName()}</p>
-                      <span className="text-[10px] uppercase font-bold text-teal-600 bg-teal-50 px-2 py-0.5 rounded-full border border-teal-100">{getUserRoleLabel()}</span>
+                      <div className="flex items-center gap-2 mt-1">
+                        <span className={`text-[9px] uppercase font-black px-2 py-0.5 rounded-full border ${isStaff
+                            ? 'bg-indigo-50 text-indigo-700 border-indigo-100'
+                            : 'bg-teal-50 text-teal-600 border-teal-100'
+                          }`}>
+                          {getUserRoleLabel()}
+                        </span>
+                        {isStaff && (
+                          <span className="text-[9px] font-bold text-slate-400">Hospital Admin</span>
+                        )}
+                      </div>
                     </div>
                   </div>
-                  <button onClick={handleDashboardClick} className="w-full bg-white border border-slate-200 text-slate-700 py-2 rounded-xl text-sm font-bold shadow-sm hover:border-teal-500 hover:text-teal-600 transition-all flex items-center justify-center gap-2">
-                    <LayoutDashboard className="w-4 h-4" /> Go to Dashboard
+                  <button onClick={handleDashboardClick} className="w-full bg-slate-900 text-white py-3 rounded-xl text-sm font-black shadow-lg shadow-slate-200 active:scale-95 transition-all flex items-center justify-center gap-2 mb-2">
+                    <LayoutDashboard className="w-4 h-4" />
+                    {isStaff ? 'Back to Admin Hub' : 'My Health Dashboard'}
                   </button>
+                  {isStaff && (
+                    <p className="text-[10px] text-center text-slate-400 font-medium">Switching to administrative view...</p>
+                  )}
                 </div>
               )}
 

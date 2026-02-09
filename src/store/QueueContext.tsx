@@ -10,7 +10,7 @@ export const QueueProvider: React.FC<{ children: ReactNode }> = ({ children }) =
     const saved = localStorage.getItem('hq_queue');
     return saved ? JSON.parse(saved) : INITIAL_QUEUE;
   });
-  
+
   const [user, setUser] = useState<User | null>(() => {
     const saved = localStorage.getItem('hq_user');
     return saved ? JSON.parse(saved) : null;
@@ -40,10 +40,18 @@ export const QueueProvider: React.FC<{ children: ReactNode }> = ({ children }) =
     const interval = setInterval(() => {
       const now = new Date();
       const today = now.toISOString().split('T')[0];
-      
+
       queue.forEach(item => {
-        // Skip if already notified or completed
-        if (item.notified || item.status === QueueStatus.COMPLETED || item.date !== today) return;
+        // --- FIX: Notification Bombing ---
+        // Only notify if the item belongs to the currently logged in patient
+        // We compare by fullName or phone as a fallback in this version
+        const isOwnItem = user && (
+          (item.patientName === user.fullName) ||
+          (item.phone === user.phone)
+        );
+
+        // Skip if not own item, already notified, completed, or not today
+        if (!isOwnItem || item.notified || item.status === QueueStatus.COMPLETED || item.date !== today) return;
 
         let shouldNotify = false;
         let notificationTitle = "";
@@ -56,12 +64,12 @@ export const QueueProvider: React.FC<{ children: ReactNode }> = ({ children }) =
             let [hours, minutes] = time.split(':').map(Number);
             if (modifier === 'PM' && hours < 12) hours += 12;
             if (modifier === 'AM' && hours === 12) hours = 0;
-            
+
             const apptTime = new Date();
             apptTime.setHours(hours, minutes, 0, 0);
-            
+
             const diffInMins = (apptTime.getTime() - now.getTime()) / (1000 * 60);
-            
+
             if (diffInMins > 0 && diffInMins <= 10) {
               shouldNotify = true;
               notificationTitle = "Upcoming Appointment";
@@ -74,14 +82,14 @@ export const QueueProvider: React.FC<{ children: ReactNode }> = ({ children }) =
 
         // 2. Proximity-based check (Position < 3)
         if (!shouldNotify && item.status === QueueStatus.WAITING) {
-          const deptQueue = queue.filter(q => 
-            q.hospitalId === item.hospitalId && 
-            q.department === item.department && 
+          const deptQueue = queue.filter(q =>
+            q.hospitalId === item.hospitalId &&
+            q.department === item.department &&
             q.status !== QueueStatus.COMPLETED &&
             q.date === today
           );
           const pos = deptQueue.findIndex(q => q.id === item.id) + 1;
-          
+
           if (pos > 0 && pos <= 3) {
             shouldNotify = true;
             notificationTitle = "You are almost next!";
@@ -97,7 +105,7 @@ export const QueueProvider: React.FC<{ children: ReactNode }> = ({ children }) =
             type: 'reminder',
             timestamp: Date.now()
           };
-          
+
           setNotifications(prev => [...prev, newNotif]);
           // Mark as notified so we don't spam
           setQueue(prev => prev.map(q => q.id === item.id ? { ...q, notified: true } : q));
@@ -114,7 +122,7 @@ export const QueueProvider: React.FC<{ children: ReactNode }> = ({ children }) =
 
   const addQueueItem = useCallback((itemData: Omit<QueueItem, 'id' | 'ticketId' | 'timestamp' | 'stage' | 'status'>) => {
     const ticketNumber = 100 + queue.length + 1;
-    
+
     const newItem: QueueItem = {
       ...itemData,
       id: Math.random().toString(36).substr(2, 9),
@@ -132,9 +140,9 @@ export const QueueProvider: React.FC<{ children: ReactNode }> = ({ children }) =
     setQueue(prev => prev.map(item => {
       if (item.id === id) {
         const isToday = item.date === new Date().toISOString().split('T')[0];
-        return { 
-          ...item, 
-          status: isToday ? QueueStatus.WAITING : QueueStatus.UPCOMING 
+        return {
+          ...item,
+          status: isToday ? QueueStatus.WAITING : QueueStatus.UPCOMING
         };
       }
       return item;
@@ -195,15 +203,15 @@ export const QueueProvider: React.FC<{ children: ReactNode }> = ({ children }) =
   }, []);
 
   return (
-    <QueueContext.Provider value={{ 
-      queue, 
-      user, 
+    <QueueContext.Provider value={{
+      queue,
+      user,
       hospitals,
       notifications,
-      addQueueItem, 
-      updateQueueItem, 
-      advanceQueue, 
-      registerUser, 
+      addQueueItem,
+      updateQueueItem,
+      advanceQueue,
+      registerUser,
       registerHospitalProfile,
       registerHospital,
       acceptBooking,
