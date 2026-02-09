@@ -94,10 +94,13 @@ const HospitalRegistration: React.FC = () => {
         // For now, we'll just log it
         console.log('📧 Hospital ID to be emailed:', hospital.id, 'to', form.email);
 
-        // Navigate to dashboard after showing the ID
+        // Navigate to Staff Dashboard as requested by user flow
         setTimeout(() => {
-          navigate(`/admin/${hospital.id}/dashboard`, {
-            state: { hospital }
+          navigate('/staff/dashboard', {
+            state: {
+              newHospitalId: hospital.id,
+              hospitalName: hospital.name
+            }
           });
         }, 5000); // Give them time to see and copy the ID
       }
