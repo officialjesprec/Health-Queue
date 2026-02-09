@@ -30,7 +30,7 @@ const HospitalLogin: React.FC = () => {
 
         try {
             // Step 1: Authenticate the user
-            const { data: authData } = await signIn(form.email, form.password);
+            const authData = await signIn(form.email, form.password);
 
             // Step 2: Verify user is in staff table (CRITICAL SECURITY CHECK)
             const { data: staffData, error: staffError } = await supabase
@@ -61,7 +61,16 @@ const HospitalLogin: React.FC = () => {
 
             // User is verified staff - allow access
             toast.success(`Welcome back, ${(staffData as any).full_name || 'Admin'}!`);
-            navigate(redirectPath);
+
+            // Smart Redirect: Send to appropriate dashboard
+            const staff = staffData as any;
+            if (searchParams.get('redirect')) {
+                navigate(searchParams.get('redirect')!);
+            } else if (staff.role === 'admin' && staff.hospital_id) {
+                navigate(`/admin/${staff.hospital_id}/dashboard`);
+            } else {
+                navigate('/staff/dashboard');
+            }
         } catch (err: any) {
             console.error('Hospital Login Error:', err);
 
