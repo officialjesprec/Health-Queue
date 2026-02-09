@@ -12,6 +12,15 @@ const HospitalRegistration: React.FC = () => {
   const [loading, setLoading] = useState(false);
   const [hospitalIdInput, setHospitalIdInput] = useState('');
 
+  // Success Modal State
+  const [showSuccessModal, setShowSuccessModal] = useState(false);
+  const [registeredHospital, setRegisteredHospital] = useState<any>(null);
+
+  const copyToClipboard = (text: string, label: string) => {
+    navigator.clipboard.writeText(text);
+    toast.success(`${label} copied!`, { icon: '📋' });
+  };
+
   // Form State
   const [form, setForm] = useState({
     name: '',
@@ -68,41 +77,13 @@ const HospitalRegistration: React.FC = () => {
 
       if (data) {
         const hospital = data as any;
+        setRegisteredHospital(hospital);
+        toast.success('Hospital registered successfully!', { duration: 4000 });
+        setShowSuccessModal(true);
 
-        // Show success with Hospital ID prominently
-        toast.success('Hospital registered successfully!', { duration: 6000 });
-
-        // Show Hospital ID in a custom alert/modal (we'll use a timeout to show after toast)
-        setTimeout(() => {
-          const hospitalId = hospital.id;
-          const message = `🎉 REGISTRATION SUCCESSFUL!\n\n` +
-            `📋 YOUR HOSPITAL ID:\n${hospitalId}\n\n` +
-            `⚠️ IMPORTANT: Save this ID! You'll need it to:\n` +
-            `• Access your hospital admin portal\n` +
-            `• Let staff members log in\n\n` +
-            `📧 We've also sent this ID to: ${form.email}\n\n` +
-            `Would you like to copy it now?`;
-
-          if (confirm(message)) {
-            navigator.clipboard.writeText(hospitalId)
-              .then(() => toast.success('Hospital ID copied to clipboard!'))
-              .catch(() => toast.error('Could not copy. Please write it down manually.'));
-          }
-        }, 1000);
-
-        // TODO: Send email with Hospital ID (requires email service integration)
-        // For now, we'll just log it
-        console.log('📧 Hospital ID to be emailed:', hospital.id, 'to', form.email);
-
-        // Navigate to Staff Dashboard as requested by user flow
-        setTimeout(() => {
-          navigate('/staff/dashboard', {
-            state: {
-              newHospitalId: hospital.id,
-              hospitalName: hospital.name
-            }
-          });
-        }, 5000); // Give them time to see and copy the ID
+        // Navigation will now be handled by the modal's "Go to Dashboard" button or a timeout
+        // But we'll keep the console log for IT
+        console.log('📧 Hospital ID:', hospital.id);
       }
     } catch (err: any) {
       toast.error(err.message || 'Failed to register hospital');
@@ -285,6 +266,72 @@ const HospitalRegistration: React.FC = () => {
           </div>
         </form>
       </div>
+
+      {/* Success Modal */}
+      {showSuccessModal && registeredHospital && (
+        <div className="fixed inset-0 bg-slate-900/80 backdrop-blur-md flex items-center justify-center p-4 z-[100] animate-in fade-in duration-300">
+          <div className="bg-white rounded-[2.5rem] p-8 md:p-12 max-w-lg w-full shadow-2xl border border-slate-100 relative overflow-hidden">
+            <div className="absolute top-0 left-0 w-full h-2 bg-teal-600"></div>
+
+            <div className="w-20 h-20 bg-teal-50 text-teal-600 rounded-3xl flex items-center justify-center mx-auto mb-6 scale-110 shadow-inner">
+              <Building className="w-10 h-10" />
+            </div>
+
+            <h2 className="text-3xl font-black text-slate-900 text-center mb-4 tracking-tight">Portal Launched!</h2>
+            <p className="text-slate-500 text-sm font-medium text-center mb-8 px-4">
+              Your hospital management system is now live. Share this unique ID with your staff to let them log in.
+            </p>
+
+            <div className="space-y-4 mb-10">
+              <div className="p-6 bg-slate-50 rounded-[2rem] border-2 border-slate-100 group relative">
+                <p className="text-[10px] font-black uppercase text-slate-400 tracking-[.25em] mb-2 text-center">Your Universal Hospital ID</p>
+                <div className="flex flex-col items-center">
+                  <p className="font-mono font-black text-lg md:text-xl text-teal-700 tracking-wider mb-4 break-all text-center">{registeredHospital.id}</p>
+                  <button
+                    onClick={() => copyToClipboard(registeredHospital.id, 'Hospital ID')}
+                    className="flex items-center gap-2 px-6 py-2.5 bg-white border border-slate-200 rounded-xl text-xs font-black text-slate-600 hover:text-teal-600 hover:border-teal-200 transition-all shadow-sm active:scale-95"
+                  >
+                    <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M8 5H6a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2v-1M8 5a2 2 0 002 2h2a2 2 0 002-2M8 5a2 2 0 012-2h2a2 2 0 012 2m0 0h2a2 2 0 012 2v3m2 4H10m0 0l3-3m-3 3l3 3" /></svg>
+                    Copy Hospital ID
+                  </button>
+                </div>
+              </div>
+
+              <div className="bg-amber-50 p-4 rounded-2xl border border-amber-100 flex items-start gap-3">
+                <div className="p-1.5 bg-amber-100 rounded-lg">
+                  <Lock className="w-4 h-4 text-amber-700" />
+                </div>
+                <p className="text-[10px] font-bold text-amber-900 leading-normal">
+                  <span className="block mb-1 text-xs">Security Warning:</span>
+                  Save this ID immediately. It is required for all administrative access and cannot be retrieved easily if lost.
+                </p>
+              </div>
+            </div>
+
+            <div className="grid grid-cols-2 gap-4">
+              <button
+                onClick={() => setShowSuccessModal(false)}
+                className="py-4 bg-slate-50 text-slate-500 rounded-2xl font-black text-sm hover:bg-slate-100 transition-all"
+              >
+                Wait, not yet
+              </button>
+              <button
+                onClick={() => {
+                  navigate('/staff/dashboard', {
+                    state: {
+                      newHospitalId: registeredHospital.id,
+                      hospitalName: registeredHospital.name
+                    }
+                  });
+                }}
+                className="py-4 bg-teal-600 text-white rounded-2xl font-black text-sm shadow-xl shadow-teal-100 hover:bg-teal-700 active:scale-95 transition-all flex items-center justify-center gap-2"
+              >
+                Manage Staff <ArrowRight className="w-4 h-4" />
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 };

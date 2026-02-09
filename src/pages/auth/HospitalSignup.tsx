@@ -17,7 +17,6 @@ const HospitalSignup: React.FC = () => {
     const [showPassword, setShowPassword] = useState(false);
     const [form, setForm] = useState({
         fullName: '', // This will be the Admin Name
-        hospitalName: '', // Optional: Capture generic hospital name early
         email: '',
         phone: '',
         password: '',
@@ -48,7 +47,6 @@ const HospitalSignup: React.FC = () => {
                 fullName: form.fullName, // Admin Name
                 phone: form.phone,
                 role: 'hospital_admin', // Optional: Tag metadata for future use
-                hospitalNameInitial: form.hospitalName
             } as any);
 
             // Auto-login after signup (Supabase 2.0+ auto-confirms email in development)
@@ -142,32 +140,18 @@ const HospitalSignup: React.FC = () => {
                                 </div>
                             </div>
 
-                            <div className="grid grid-cols-2 gap-4">
-                                <div>
-                                    <label className="text-xs font-bold uppercase text-slate-500 tracking-wider ml-1 mb-1 block">Hospital Name (Draft)</label>
-                                    <div className="relative group">
-                                        <Building className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-slate-400 group-focus-within:text-teal-500 transition-colors" />
-                                        <input
-                                            type="text"
-                                            className="w-full p-4 pl-12 bg-slate-50 border-2 border-slate-100 rounded-2xl outline-none focus:border-teal-500 focus:bg-white transition-all font-bold text-slate-900"
-                                            placeholder="Facility Name"
-                                            value={form.hospitalName}
-                                            onChange={(e) => setForm({ ...form, hospitalName: e.target.value })}
-                                        />
-                                    </div>
-                                </div>
-                                <div>
-                                    <label className="text-xs font-bold uppercase text-slate-500 tracking-wider ml-1 mb-1 block">Work Phone</label>
-                                    <div className="relative group">
-                                        <Phone className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-slate-400 group-focus-within:text-teal-500 transition-colors" />
-                                        <input
-                                            type="tel"
-                                            className="w-full p-4 pl-12 bg-slate-50 border-2 border-slate-100 rounded-2xl outline-none focus:border-teal-500 focus:bg-white transition-all font-bold text-slate-900"
-                                            placeholder="+234..."
-                                            value={form.phone}
-                                            onChange={(e) => setForm({ ...form, phone: e.target.value })}
-                                        />
-                                    </div>
+                            <div>
+                                <label className="text-xs font-bold uppercase text-slate-500 tracking-wider ml-1 mb-1 block">Work Phone</label>
+                                <div className="relative group">
+                                    <Phone className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-slate-400 group-focus-within:text-teal-500 transition-colors" />
+                                    <input
+                                        type="tel"
+                                        required
+                                        className="w-full p-4 pl-12 bg-slate-50 border-2 border-slate-100 rounded-2xl outline-none focus:border-teal-500 focus:bg-white transition-all font-bold text-slate-900"
+                                        placeholder="+234..."
+                                        value={form.phone}
+                                        onChange={(e) => setForm({ ...form, phone: e.target.value })}
+                                    />
                                 </div>
                             </div>
 

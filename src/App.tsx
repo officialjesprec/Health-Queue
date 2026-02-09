@@ -3,6 +3,7 @@ import { HashRouter as Router, Routes, Route } from 'react-router-dom';
 import { Toaster } from 'react-hot-toast';
 import Layout from './components/Layout';
 import { QueueProvider } from './store/QueueContext';
+import ProtectedRoute from './components/ProtectedRoute';
 
 // Loading Component
 const PageLoader = () => (
@@ -65,7 +66,14 @@ const App: React.FC = () => {
                 <Route path="/hospitals" element={<BookHospitals />} />
                 <Route path="/book/:hospitalId" element={<BookingFlow />} />
                 <Route path="/status/:ticketId" element={<QueueStatus />} />
-                <Route path="/dashboard" element={<PatientDashboard />} />
+                <Route
+                  path="/dashboard"
+                  element={
+                    <ProtectedRoute allowedRoles={['patient']}>
+                      <PatientDashboard />
+                    </ProtectedRoute>
+                  }
+                />
                 <Route path="/caregiver/:ticketId" element={<CaregiverView />} />
 
                 {/* Hospital Routes */}
@@ -73,10 +81,24 @@ const App: React.FC = () => {
 
                 {/* Admin Routes */}
                 <Route path="/admin/:hospitalId/login" element={<AdminLogin />} />
-                <Route path="/admin/:hospitalId/dashboard" element={<AdminDashboard />} />
+                <Route
+                  path="/admin/:hospitalId/dashboard"
+                  element={
+                    <ProtectedRoute allowedRoles={['admin']}>
+                      <AdminDashboard />
+                    </ProtectedRoute>
+                  }
+                />
 
                 {/* Staff Routes */}
-                <Route path="/staff/dashboard" element={<StaffDashboard />} />
+                <Route
+                  path="/staff/dashboard"
+                  element={
+                    <ProtectedRoute allowedRoles={['staff', 'admin']}>
+                      <StaffDashboard />
+                    </ProtectedRoute>
+                  }
+                />
               </Routes>
             </Suspense>
           </Layout>

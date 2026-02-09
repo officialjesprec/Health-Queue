@@ -105,9 +105,9 @@ const StaffDashboard = () => {
     }
 
     return (
-        <div className="min-h-screen bg-slate-50 flex">
+        <div className="min-h-[calc(100vh-64px)] bg-slate-50 flex">
             {/* Sidebar Navigation */}
-            <aside className="w-64 bg-slate-900 text-white hidden md:flex flex-col fixed h-full z-10">
+            <aside className="w-64 bg-slate-900 text-white hidden md:flex flex-col fixed top-16 h-[calc(100vh-64px)] z-10">
                 <div className="p-6 border-b border-slate-800">
                     <div className="flex items-center gap-3">
                         <div className="w-10 h-10 bg-teal-500 rounded-lg flex items-center justify-center">

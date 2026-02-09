@@ -28,8 +28,16 @@ const AdminDashboard: React.FC = () => {
 
   // Staff Creation State
   const [showStaffModal, setShowStaffModal] = useState(false);
+  const [showSuccessModal, setShowSuccessModal] = useState(false);
+  const [createdStaff, setCreatedStaff] = useState<any>(null);
   const [staffCreating, setStaffCreating] = useState(false);
   const [newStaff, setNewStaff] = useState({ name: '', role: 'nurse', password: '' });
+
+  // Handle Copy to Clipboard
+  const copyToClipboard = (text: string, label: string) => {
+    navigator.clipboard.writeText(text);
+    toast.success(`${label} copied!`, { icon: '📋' });
+  };
 
   // Handle Staff Creation (using temporary client)
   const handleAddStaff = async () => {
@@ -89,12 +97,18 @@ const AdminDashboard: React.FC = () => {
         if (dbError) throw dbError;
 
         // Success Feedback
-        toast.success(`Staff Account Created!\nID: ${staffCode}`, { duration: 8000, icon: '👨‍⚕️' });
+        const staffResult = {
+          name: newStaff.name,
+          code: staffCode,
+          password: newStaff.password,
+          email: dummyEmail
+        };
+
+        setCreatedStaff(staffResult);
+        toast.success(`Staff Account Created!`, { duration: 4000, icon: '👨‍⚕️' });
         setShowStaffModal(false);
         setNewStaff({ name: '', role: 'nurse', password: '' });
-
-        // Alert with credentials (critical for User to see)
-        alert(`IMPORTANT CREDENTIALS:\n\nStaff Name: ${newStaff.name}\nLogin ID: ${staffCode}\nPassword: ${newStaff.password}\n\nPlease share these credentials securely with the staff member.`);
+        setShowSuccessModal(true);
       }
 
     } catch (error: any) {
@@ -108,8 +122,27 @@ const AdminDashboard: React.FC = () => {
   // Fetch hospital data from Supabase
   useEffect(() => {
     const fetchHospital = async () => {
-      if (!hospitalId) {
+      if (!hospitalId || !user) {
         setHospitalLoading(false);
+        return;
+      }
+
+      // Security Check: Verify user is an admin for THIS hospital
+      try {
+        const { data: staffCheck, error: staffError } = await supabase
+          .from('staff')
+          .select('*')
+          .eq('id', user.id)
+          .eq('hospital_id', hospitalId)
+          .maybeSingle();
+
+        if (staffError || !staffCheck || (staffCheck as any).role !== 'admin') {
+          toast.error('Unauthorized access to this hospital dashboard');
+          navigate('/dashboard');
+          return;
+        }
+      } catch (err) {
+        navigate('/dashboard');
         return;
       }
 
@@ -486,6 +519,60 @@ const AdminDashboard: React.FC = () => {
                 </button>
               </div>
             </div>
+          </div>
+        </div>
+      )}
+
+      {/* Success Modal */}
+      {showSuccessModal && createdStaff && (
+        <div className="fixed inset-0 bg-slate-900/80 backdrop-blur-md flex items-center justify-center p-4 z-[110] animate-in fade-in duration-300">
+          <div className="bg-white rounded-[2.5rem] p-8 max-w-md w-full shadow-2xl border border-slate-100 relative overflow-hidden">
+            <div className="absolute top-0 left-0 w-full h-2 bg-emerald-500"></div>
+
+            <div className="w-20 h-20 bg-emerald-50 text-emerald-600 rounded-3xl flex items-center justify-center mx-auto mb-6 scale-110 shadow-inner">
+              <svg className="w-10 h-10" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M5 13l4 4L19 7" />
+              </svg>
+            </div>
+
+            <h2 className="text-2xl font-black text-slate-900 text-center mb-2">Staff Created!</h2>
+            <p className="text-slate-500 text-sm font-medium text-center mb-8">
+              Copy these credentials and share them securely with the staff member.
+            </p>
+
+            <div className="space-y-3 mb-8">
+              <div className="p-4 bg-slate-50 rounded-2xl border border-slate-100 group relative">
+                <p className="text-[10px] font-black uppercase text-slate-400 tracking-widest mb-1">Staff ID / Login Code</p>
+                <div className="flex items-center justify-between">
+                  <p className="font-mono font-black text-lg text-teal-700 tracking-wider">{createdStaff.code}</p>
+                  <button onClick={() => copyToClipboard(createdStaff.code, 'Staff ID')} className="p-2 hover:bg-white rounded-lg transition-colors text-slate-400 hover:text-teal-600">
+                    <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 5H6a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2v-1M8 5a2 2 0 002 2h2a2 2 0 002-2M8 5a2 2 0 012-2h2a2 2 0 012 2m0 0h2a2 2 0 012 2v3m2 4H10m0 0l3-3m-3 3l3 3" /></svg>
+                  </button>
+                </div>
+              </div>
+
+              <div className="p-4 bg-slate-50 rounded-2xl border border-slate-100">
+                <p className="text-[10px] font-black uppercase text-slate-400 tracking-widest mb-1">Temporary Password</p>
+                <div className="flex items-center justify-between">
+                  <p className="font-bold text-slate-900">{createdStaff.password}</p>
+                  <button onClick={() => copyToClipboard(createdStaff.password, 'Password')} className="p-2 hover:bg-white rounded-lg transition-colors text-slate-400 hover:text-teal-600">
+                    <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 5H6a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2v-1M8 5a2 2 0 002 2h2a2 2 0 002-2M8 5a2 2 0 012-2h2a2 2 0 012 2m0 0h2a2 2 0 012 2v3m2 4H10m0 0l3-3m-3 3l3 3" /></svg>
+                  </button>
+                </div>
+              </div>
+
+              <div className="p-3 bg-amber-50 rounded-xl border border-amber-100 flex items-start gap-3">
+                <svg className="w-5 h-5 text-amber-600 flex-shrink-0 mt-0.5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" /></svg>
+                <p className="text-[10px] font-bold text-amber-900 leading-tight">These credentials will not be shown again. Please ensure you have copied them safely.</p>
+              </div>
+            </div>
+
+            <button
+              onClick={() => setShowSuccessModal(false)}
+              className="w-full py-4 bg-slate-900 text-white rounded-2xl font-black shadow-lg shadow-slate-200 active:scale-95 transition-all"
+            >
+              Done, close this
+            </button>
           </div>
         </div>
       )}
