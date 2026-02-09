@@ -3,17 +3,18 @@ import React, { useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { MEDICAL_TERMS_SIMPLE } from '../constants';
 import { useQueue } from '../store/QueueContext';
+import { useHospital } from '../hooks/useHospitals';
 import InfoTooltip from '../components/InfoTooltip';
 
 const BookingFlow: React.FC = () => {
   const { hospitalId } = useParams();
   const navigate = useNavigate();
-  const { addQueueItem, user, registerUser, registerHospitalProfile, hospitals } = useQueue();
-  
-  const hospital = hospitals.find(h => h.id === hospitalId);
+  const { addQueueItem, user, registerUser, registerHospitalProfile } = useQueue();
+  const { hospital, loading: hospitalLoading, error: hospitalError } = useHospital(hospitalId || '');
+
   const [step, setStep] = useState(1);
   const [customService, setCustomService] = useState('');
-  
+
   // Registration data
   const [regForm, setRegForm] = useState({
     fullName: user?.fullName || '',
@@ -34,24 +35,42 @@ const BookingFlow: React.FC = () => {
     reason: ''
   });
 
-  if (!hospital) {
+  if (hospitalLoading) {
+    return (
+      <div className="min-h-[60vh] flex items-center justify-center">
+        <div className="text-center">
+          <div className="w-12 h-12 border-4 border-teal-600 border-t-transparent rounded-full animate-spin mx-auto mb-4"></div>
+          <p className="text-slate-500 font-bold">Fetching hospital details...</p>
+        </div>
+      </div>
+    );
+  }
+
+  if (hospitalError || !hospital) {
     return (
       <div className="max-w-md mx-auto py-20 text-center">
+        <div className="w-20 h-20 bg-red-50 text-red-600 rounded-3xl flex items-center justify-center mx-auto mb-6">
+          <svg className="w-10 h-10" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" /></svg>
+        </div>
         <h2 className="text-2xl font-black text-slate-900">Hospital Not Found</h2>
-        <p className="text-slate-500 mt-2">The hospital you are trying to book with is not in our system.</p>
-        <button onClick={() => navigate('/')} className="mt-6 text-teal-600 font-bold">Back to Home</button>
+        <p className="text-slate-500 mt-2">
+          {hospitalError ? 'There was an error connecting to the hospital portal.' : 'The hospital you are trying to book with is not in our system.'}
+        </p>
+        <button onClick={() => navigate('/')} className="mt-8 px-8 py-3 bg-slate-900 text-white font-bold rounded-2xl hover:bg-slate-800 transition-all">
+          Find Another Hospital
+        </button>
       </div>
     );
   }
 
   const hasProfile = user?.profiles.some(p => p.hospitalId === hospital.id);
 
-  const handleComplete = () => {
+  const handleComplete = async () => {
     const finalService = form.service === 'CUSTOM' ? customService : form.service;
-    
+
     // Auto-register user basic info if not present
     if (!user) {
-      registerUser({ fullName: regForm.fullName, phone: regForm.phone });
+      await registerUser({ fullName: regForm.fullName, phone: regForm.phone });
     }
 
     const item = addQueueItem({
@@ -65,12 +84,12 @@ const BookingFlow: React.FC = () => {
       date: form.date,
       paymentStatus: 'Paid'
     });
-    navigate(`/status/${item.id}`);
+    navigate('/dashboard');
   };
 
-  const handlePaymentAndReg = () => {
-    registerHospitalProfile(hospital.id);
-    registerUser({
+  const handlePaymentAndReg = async () => {
+    await registerHospitalProfile(hospital.id);
+    await registerUser({
       fullName: regForm.fullName,
       phone: regForm.phone,
       dateOfBirth: regForm.dob,
@@ -158,7 +177,7 @@ const BookingFlow: React.FC = () => {
                 </button>
               ))}
               <div className={`w-full p-4 rounded-2xl border-2 transition-all ${form.service === 'CUSTOM' ? 'border-teal-500 bg-teal-50' : 'border-slate-100'}`}>
-                <button onClick={() => setForm({...form, service: 'CUSTOM'})} className="w-full text-left font-bold text-slate-700 mb-2">I need something else...</button>
+                <button onClick={() => setForm({ ...form, service: 'CUSTOM' })} className="w-full text-left font-bold text-slate-700 mb-2">I need something else...</button>
                 {form.service === 'CUSTOM' && (
                   <input type="text" autoFocus className="w-full p-3 bg-white border border-teal-200 rounded-xl outline-none" value={customService} onChange={(e) => setCustomService(e.target.value)} placeholder="Explain in simple words" />
                 )}
@@ -178,16 +197,16 @@ const BookingFlow: React.FC = () => {
               <p className="text-sm text-slate-500">Select a date for your visit</p>
             </div>
             <div className="space-y-4">
-              <input 
-                type="date" 
+              <input
+                type="date"
                 className="w-full p-4 bg-slate-50 border-2 border-slate-100 rounded-2xl outline-none focus:border-teal-500 text-lg font-bold"
                 value={form.date}
                 min={new Date().toISOString().split('T')[0]}
-                onChange={e => setForm({...form, date: e.target.value})}
+                onChange={e => setForm({ ...form, date: e.target.value })}
               />
               <div className="p-4 rounded-2xl border transition-colors bg-slate-50 border-slate-100">
                 <label className="flex items-start space-x-3 cursor-pointer">
-                  <input type="checkbox" className="mt-1 w-5 h-5 text-red-600" checked={form.isEmergency} onChange={e => setForm({...form, isEmergency: e.target.checked})} />
+                  <input type="checkbox" className="mt-1 w-5 h-5 text-red-600" checked={form.isEmergency} onChange={e => setForm({ ...form, isEmergency: e.target.checked })} />
                   <div className="flex-1">
                     <span className="font-bold text-slate-900">This is an emergency</span>
                     <p className="text-xs text-slate-500">Emergencies are only for today's visits.</p>
@@ -212,30 +231,30 @@ const BookingFlow: React.FC = () => {
               <div className="grid grid-cols-2 gap-3">
                 <div className="col-span-2">
                   <label className="text-[10px] font-black uppercase text-slate-400">Full Name</label>
-                  <input className="w-full p-3 bg-slate-50 rounded-xl" value={regForm.fullName} onChange={e => setRegForm({...regForm, fullName: e.target.value})} placeholder="As on ID" />
+                  <input className="w-full p-3 bg-slate-50 rounded-xl" value={regForm.fullName} onChange={e => setRegForm({ ...regForm, fullName: e.target.value })} placeholder="As on ID" />
                 </div>
                 <div>
                   <label className="text-[10px] font-black uppercase text-slate-400">Phone</label>
-                  <input className="w-full p-3 bg-slate-50 rounded-xl" value={regForm.phone} onChange={e => setRegForm({...regForm, phone: e.target.value})} placeholder="080..." />
+                  <input className="w-full p-3 bg-slate-50 rounded-xl" value={regForm.phone} onChange={e => setRegForm({ ...regForm, phone: e.target.value })} placeholder="080..." />
                 </div>
                 <div>
                   <label className="text-[10px] font-black uppercase text-slate-400">DOB</label>
-                  <input type="date" className="w-full p-3 bg-slate-50 rounded-xl" value={regForm.dob} onChange={e => setRegForm({...regForm, dob: e.target.value})} />
+                  <input type="date" className="w-full p-3 bg-slate-50 rounded-xl" value={regForm.dob} onChange={e => setRegForm({ ...regForm, dob: e.target.value })} />
                 </div>
                 <div className="col-span-2">
                   <label className="text-[10px] font-black uppercase text-slate-400">Address</label>
-                  <input className="w-full p-3 bg-slate-50 rounded-xl" value={regForm.address} onChange={e => setRegForm({...regForm, address: e.target.value})} placeholder="Lagos, Nigeria" />
+                  <input className="w-full p-3 bg-slate-50 rounded-xl" value={regForm.address} onChange={e => setRegForm({ ...regForm, address: e.target.value })} placeholder="Lagos, Nigeria" />
                 </div>
               </div>
               <h3 className="text-sm font-bold text-slate-900 border-t pt-4">Next of Kin</h3>
               <div className="grid grid-cols-2 gap-3">
-                <input className="col-span-2 w-full p-3 bg-slate-50 rounded-xl" value={regForm.kinName} onChange={e => setRegForm({...regForm, kinName: e.target.value})} placeholder="Relative Name" />
-                <input className="w-full p-3 bg-slate-50 rounded-xl" value={regForm.kinRelation} onChange={e => setRegForm({...regForm, kinRelation: e.target.value})} placeholder="Relationship" />
-                <input className="w-full p-3 bg-slate-50 rounded-xl" value={regForm.kinPhone} onChange={e => setRegForm({...regForm, kinPhone: e.target.value})} placeholder="Relative Phone" />
+                <input className="col-span-2 w-full p-3 bg-slate-50 rounded-xl" value={regForm.kinName} onChange={e => setRegForm({ ...regForm, kinName: e.target.value })} placeholder="Relative Name" />
+                <input className="w-full p-3 bg-slate-50 rounded-xl" value={regForm.kinRelation} onChange={e => setRegForm({ ...regForm, kinRelation: e.target.value })} placeholder="Relationship" />
+                <input className="w-full p-3 bg-slate-50 rounded-xl" value={regForm.kinPhone} onChange={e => setRegForm({ ...regForm, kinPhone: e.target.value })} placeholder="Relative Phone" />
               </div>
             </div>
-            <button 
-              onClick={handlePaymentAndReg} 
+            <button
+              onClick={handlePaymentAndReg}
               className="w-full py-5 bg-slate-900 text-white font-black rounded-3xl shadow-xl shadow-slate-200 mt-4 active:scale-95 transition-all"
             >
               Pay ₦{hospital.registrationFee} & Register

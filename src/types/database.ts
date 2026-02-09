@@ -151,6 +151,7 @@ export interface Database {
                     notified: boolean
                     queue_position: number | null
                     estimated_wait_time: number | null
+                    assigned_staff_id: string | null
                     created_at: string
                     updated_at: string
                 }
@@ -170,6 +171,7 @@ export interface Database {
                     notified?: boolean
                     queue_position?: number | null
                     estimated_wait_time?: number | null
+                    assigned_staff_id?: string | null
                     created_at?: string
                     updated_at?: string
                 }
@@ -189,6 +191,7 @@ export interface Database {
                     notified?: boolean
                     queue_position?: number | null
                     estimated_wait_time?: number | null
+                    assigned_staff_id?: string | null
                     created_at?: string
                     updated_at?: string
                 }

@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useAuth } from '../hooks/useAuth';
 import { useQueue } from '../store/QueueContext';
+import { QueueStatus, JourneyStage } from '../types';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { supabase } from '../lib/supabase';
 import {
@@ -12,7 +13,7 @@ import toast from 'react-hot-toast';
 
 const StaffDashboard = () => {
     const { user, signOut } = useAuth();
-    const { queue, hospitals, updateStatus } = useQueue();
+    const { queue, hospitals, updateQueueItem } = useQueue();
     const navigate = useNavigate();
     const location = useLocation();
 
@@ -89,72 +90,89 @@ const StaffDashboard = () => {
 
     const handleStatusUpdate = async (queueId: string, newStatus: 'completed' | 'cancelled' | 'serving') => {
         try {
-            await updateStatus(queueId, newStatus);
+            // 1. Update Supabase
+            const { error } = await (supabase
+                .from('queue_items') as any)
+                .update({
+                    status: newStatus === 'serving' ? QueueStatus.IN_PROGRESS : QueueStatus.COMPLETED,
+                    stage: newStatus === 'serving' ? JourneyStage.DOCTOR : JourneyStage.COMPLETED
+                })
+                .eq('id', queueId);
+
+            if (error) throw error;
+
+            // 2. Update Local State
+            updateQueueItem(queueId, {
+                status: newStatus === 'serving' ? QueueStatus.IN_PROGRESS : QueueStatus.COMPLETED,
+                stage: newStatus === 'serving' ? JourneyStage.DOCTOR : JourneyStage.COMPLETED
+            });
+
             toast.success(`Patient status updated to ${newStatus}`);
         } catch (error) {
+            console.error('Error updating status:', error);
             toast.error('Failed to update status');
         }
     };
 
     if (loading) {
         return (
-            <div className="min-h-screen flex items-center justify-center bg-slate-50">
-                <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-teal-600"></div>
+            <div className="min-h-screen flex items-center justify-center bg-healthcare-bg">
+                <div className="spinner"></div>
             </div>
         );
     }
 
     return (
-        <div className="min-h-[calc(100vh-64px)] bg-slate-50 flex">
+        <div className="min-h-[calc(100vh-80px)] bg-healthcare-bg flex">
             {/* Sidebar Navigation */}
-            <aside className="w-64 bg-slate-900 text-white hidden md:flex flex-col fixed top-16 h-[calc(100vh-64px)] z-10">
-                <div className="p-6 border-b border-slate-800">
-                    <div className="flex items-center gap-3">
-                        <div className="w-10 h-10 bg-teal-500 rounded-lg flex items-center justify-center">
-                            <Users className="text-white w-6 h-6" />
+            <aside className="w-72 bg-healthcare-surface border-r border-main hidden md:flex flex-col fixed top-20 h-[calc(100vh-80px)] z-10">
+                <div className="p-8 border-b border-main">
+                    <div className="flex items-center gap-4">
+                        <div className="w-12 h-12 bg-teal-500/10 rounded-2xl flex items-center justify-center">
+                            <Users className="text-teal-500 w-6 h-6" />
                         </div>
                         <div>
-                            <h2 className="font-bold text-lg">Staff Portal</h2>
-                            <p className="text-xs text-slate-400">Health Queue</p>
+                            <h2 className="font-black text-lg tracking-tight">Staff Portal</h2>
+                            <p className="text-[10px] text-healthcare-text-muted font-black uppercase tracking-widest">Healthcare Logic</p>
                         </div>
                     </div>
                 </div>
 
-                <nav className="flex-1 p-4 space-y-2">
-                    <div className="px-4 py-2 text-xs font-bold text-slate-500 uppercase tracking-wider">Menu</div>
+                <nav className="flex-1 px-4 py-2 space-y-1 overflow-y-auto">
+                    <div className="px-4 py-4 text-[10px] font-black text-healthcare-text-muted uppercase tracking-widest">Main Menu</div>
 
-                    <a href="#" className="flex items-center gap-3 px-4 py-3 bg-teal-600 rounded-xl text-white font-medium">
+                    <a href="#" className="flex items-center gap-4 px-6 py-4 bg-teal-600 text-white rounded-2xl font-black shadow-lg shadow-teal-500/20 mx-2">
                         <LayoutDashboard className="w-5 h-5" />
                         Dashboard
                     </a>
 
-                    <a href="#" className="flex items-center gap-3 px-4 py-3 text-slate-400 hover:text-white hover:bg-slate-800 rounded-xl transition-colors">
+                    <a href="#" className="flex items-center gap-4 px-6 py-4 text-healthcare-text-muted hover:text-healthcare-text hover:bg-healthcare-bg rounded-2xl transition-all mx-2 font-bold">
                         <Calendar className="w-5 h-5" />
                         Appointments
                     </a>
 
-                    <a href="#" className="flex items-center gap-3 px-4 py-3 text-slate-400 hover:text-white hover:bg-slate-800 rounded-xl transition-colors">
+                    <a href="#" className="flex items-center gap-4 px-6 py-4 text-healthcare-text-muted hover:text-healthcare-text hover:bg-healthcare-bg rounded-2xl transition-all mx-2 font-bold">
                         <Users className="w-5 h-5" />
                         My Patients
                     </a>
 
-                    <div className="px-4 py-2 mt-6 text-xs font-bold text-slate-500 uppercase tracking-wider">Profile</div>
+                    <div className="px-6 py-6 mt-4 text-[10px] font-black text-healthcare-text-muted uppercase tracking-widest">System</div>
 
-                    <div className="flex items-center gap-3 px-4 py-3">
-                        <div className="w-8 h-8 rounded-full bg-slate-700 flex items-center justify-center">
-                            <span className="text-xs font-bold">{profile?.full_name?.charAt(0) || 'S'}</span>
+                    <div className="flex items-center gap-3 px-4 py-4 bg-healthcare-bg/50 rounded-2xl mx-2 border border-main">
+                        <div className="w-10 h-10 rounded-xl bg-healthcare-surface border border-main flex items-center justify-center">
+                            <span className="text-sm font-black text-teal-500">{profile?.full_name?.charAt(0) || 'S'}</span>
                         </div>
                         <div className="overflow-hidden">
-                            <p className="text-sm font-medium truncate">{profile?.full_name}</p>
-                            <p className="text-xs text-slate-500 truncate">{profile?.role} • {hospital?.name || 'Loading...'}</p>
+                            <p className="text-sm font-black truncate">{profile?.full_name}</p>
+                            <p className="text-[10px] text-healthcare-text-muted font-black truncate uppercase tracking-tighter">{profile?.role}</p>
                         </div>
                     </div>
                 </nav>
 
-                <div className="p-4 border-t border-slate-800">
+                <div className="p-6 border-t border-main">
                     <button
                         onClick={signOut}
-                        className="flex items-center gap-3 w-full px-4 py-3 text-red-400 hover:text-red-300 hover:bg-red-900/20 rounded-xl transition-colors"
+                        className="flex items-center gap-4 w-full px-6 py-4 text-red-500 hover:text-red-400 hover:bg-red-500/10 rounded-2xl transition-all font-black uppercase text-[10px] tracking-widest"
                     >
                         <LogOut className="w-5 h-5" />
                         Sign Out
@@ -163,17 +181,17 @@ const StaffDashboard = () => {
             </aside>
 
             {/* Main Content */}
-            <main className="flex-1 md:ml-64 p-8">
-                <header className="flex justify-between items-center mb-8">
+            <main className="flex-1 md:ml-72 p-10 space-y-10">
+                <header className="flex flex-col md:flex-row justify-between items-start md:items-center gap-6">
                     <div>
-                        <h1 className="text-2xl font-bold text-slate-900">Welcome, {profile?.full_name}</h1>
-                        <p className="text-slate-500">
-                            Staff ID: <span className="font-mono bg-slate-200 px-2 py-0.5 rounded text-slate-700">{profile?.staff_code || '---'}</span>
+                        <h1 className="text-4xl font-black tracking-tight mb-2">Welcome, {profile?.full_name}</h1>
+                        <p className="text-healthcare-text-muted font-bold">
+                            STAFF CREDENTIALS • <span className="font-mono bg-healthcare-surface border border-main px-3 py-1 rounded-lg text-healthcare-text">{profile?.staff_code || '---'}</span>
                         </p>
                     </div>
-                    <div className="text-right">
-                        <p className="text-sm font-bold text-teal-600">{hospital?.name}</p>
-                        <p className="text-xs text-slate-500">{hospital?.location}</p>
+                    <div className="text-left md:text-right bg-healthcare-surface p-4 rounded-2xl border border-main shadow-sm min-w-[200px]">
+                        <p className="text-xs font-black text-teal-500 uppercase tracking-widest mb-1">{hospital?.name}</p>
+                        <p className="text-sm font-bold opacity-80">{hospital?.location}</p>
                     </div>
                 </header>
 
@@ -219,109 +237,125 @@ const StaffDashboard = () => {
                 )}
 
                 {/* Stats Row */}
-                <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
-                    <div className="bg-white p-6 rounded-2xl shadow-sm border border-slate-100">
-                        <div className="flex items-center gap-4">
-                            <div className="w-12 h-12 bg-blue-50 rounded-xl flex items-center justify-center text-blue-600">
-                                <Users className="w-6 h-6" />
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
+                    <div className="bg-healthcare-surface p-8 rounded-[2.5rem] border border-main shadow-sm hover:shadow-xl transition-all group overflow-hidden relative">
+                        <div className="flex items-center gap-6 relative z-10">
+                            <div className="w-16 h-16 bg-blue-500/10 rounded-2xl flex items-center justify-center text-blue-500 transition-transform group-hover:scale-110">
+                                <Users className="w-8 h-8" />
                             </div>
                             <div>
-                                <p className="text-sm text-slate-500 font-medium">Active Patients</p>
-                                <h3 className="text-2xl font-bold text-slate-900">{myPatients.filter(p => p.status === 'waiting').length}</h3>
+                                <p className="text-[10px] text-healthcare-text-muted font-black uppercase tracking-widest mb-1">Active Patients</p>
+                                <h3 className="text-3xl font-black">{myPatients.filter(p => p.status === 'waiting').length}</h3>
                             </div>
                         </div>
+                        <div className="absolute top-0 right-0 w-24 h-24 bg-blue-500/5 rounded-full -mr-12 -mt-12 transition-transform group-hover:scale-150"></div>
                     </div>
 
-                    <div className="bg-white p-6 rounded-2xl shadow-sm border border-slate-100">
-                        <div className="flex items-center gap-4">
-                            <div className="w-12 h-12 bg-green-50 rounded-xl flex items-center justify-center text-green-600">
-                                <CheckCircle className="w-6 h-6" />
+                    <div className="bg-healthcare-surface p-8 rounded-[2.5rem] border border-main shadow-sm hover:shadow-xl transition-all group overflow-hidden relative">
+                        <div className="flex items-center gap-6 relative z-10">
+                            <div className="w-16 h-16 bg-green-500/10 rounded-2xl flex items-center justify-center text-green-500 transition-transform group-hover:scale-110">
+                                <CheckCircle className="w-8 h-8" />
                             </div>
                             <div>
-                                <p className="text-sm text-slate-500 font-medium">Served Today</p>
-                                <h3 className="text-2xl font-bold text-slate-900">{myPatients.filter(p => p.status === 'completed').length}</h3>
+                                <p className="text-[10px] text-healthcare-text-muted font-black uppercase tracking-widest mb-1">Served Today</p>
+                                <h3 className="text-3xl font-black">{myPatients.filter(p => p.status === 'completed').length}</h3>
                             </div>
                         </div>
+                        <div className="absolute top-0 right-0 w-24 h-24 bg-green-500/5 rounded-full -mr-12 -mt-12 transition-transform group-hover:scale-150"></div>
                     </div>
 
-                    <div className="bg-white p-6 rounded-2xl shadow-sm border border-slate-100">
-                        <div className="flex items-center gap-4">
-                            <div className="w-12 h-12 bg-purple-50 rounded-xl flex items-center justify-center text-purple-600">
-                                <Clock className="w-6 h-6" />
+                    <div className="bg-healthcare-surface p-8 rounded-[2.5rem] border border-main shadow-sm hover:shadow-xl transition-all group overflow-hidden relative">
+                        <div className="flex items-center gap-6 relative z-10">
+                            <div className="w-16 h-16 bg-purple-500/10 rounded-2xl flex items-center justify-center text-purple-500 transition-transform group-hover:scale-110">
+                                <Clock className="w-8 h-8" />
                             </div>
                             <div>
-                                <p className="text-sm text-slate-500 font-medium">Avg. Wait Time</p>
-                                <h3 className="text-2xl font-bold text-slate-900">12m</h3>
+                                <p className="text-[10px] text-healthcare-text-muted font-black uppercase tracking-widest mb-1">Avg. Wait Time</p>
+                                <h3 className="text-3xl font-black">12m</h3>
                             </div>
                         </div>
+                        <div className="absolute top-0 right-0 w-24 h-24 bg-purple-500/5 rounded-full -mr-12 -mt-12 transition-transform group-hover:scale-150"></div>
                     </div>
                 </div>
 
                 {/* Patient Queue List */}
-                <div className="bg-white rounded-2xl shadow-sm border border-slate-100 overflow-hidden">
-                    <div className="p-6 border-b border-slate-100 flex justify-between items-center">
-                        <h3 className="font-bold text-lg text-slate-900">Current Queue</h3>
-                        <div className="relative">
-                            <Search className="w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" />
+                <div className="bg-healthcare-surface rounded-[2.5rem] border border-main shadow-sm overflow-hidden">
+                    <div className="p-8 border-b border-main flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
+                        <div>
+                            <h3 className="text-xl font-black tracking-tight">Current Patient Queue</h3>
+                            <p className="text-xs text-healthcare-text-muted font-bold uppercase tracking-widest mt-1">Live Updates</p>
+                        </div>
+                        <div className="relative w-full md:w-64">
+                            <Search className="w-4 h-4 absolute left-4 top-1/2 -translate-y-1/2 text-healthcare-text-muted" />
                             <input
                                 type="text"
                                 placeholder="Search patient..."
-                                className="pl-9 pr-4 py-2 bg-slate-50 border border-slate-200 rounded-lg text-sm focus:outline-none focus:border-teal-500"
+                                className="w-full pl-10 pr-4 py-3 bg-healthcare-bg border border-main rounded-xl text-sm focus:outline-none focus:border-teal-500 transition-all font-medium"
                             />
                         </div>
                     </div>
 
                     <div className="overflow-x-auto">
                         <table className="w-full">
-                            <thead className="bg-slate-50 border-b border-slate-100">
-                                <tr>
-                                    <th className="px-6 py-4 text-left text-xs font-bold text-slate-500 uppercase">Patient ID</th>
-                                    <th className="px-6 py-4 text-left text-xs font-bold text-slate-500 uppercase">Name</th>
-                                    <th className="px-6 py-4 text-left text-xs font-bold text-slate-500 uppercase">Status</th>
-                                    <th className="px-6 py-4 text-left text-xs font-bold text-slate-500 uppercase">Wait Time</th>
-                                    <th className="px-6 py-4 text-right text-xs font-bold text-slate-500 uppercase">Actions</th>
+                            <thead>
+                                <tr className="bg-healthcare-bg/50 border-b border-main">
+                                    <th className="px-8 py-5 text-left text-[10px] font-black text-healthcare-text-muted uppercase tracking-widest">Patient ID</th>
+                                    <th className="px-8 py-5 text-left text-[10px] font-black text-healthcare-text-muted uppercase tracking-widest">Full Name & Service</th>
+                                    <th className="px-8 py-5 text-left text-[10px] font-black text-healthcare-text-muted uppercase tracking-widest">Queue Status</th>
+                                    <th className="px-8 py-5 text-left text-[10px] font-black text-healthcare-text-muted uppercase tracking-widest">Wait Time</th>
+                                    <th className="px-8 py-5 text-right text-[10px] font-black text-healthcare-text-muted uppercase tracking-widest">Actions</th>
                                 </tr>
                             </thead>
-                            <tbody className="divide-y divide-slate-100">
+                            <tbody className="divide-y divide-main">
                                 {myPatients.length === 0 ? (
                                     <tr>
-                                        <td colSpan={5} className="px-6 py-12 text-center text-slate-400">
-                                            No patients in queue currently
+                                        <td colSpan={5} className="px-8 py-20 text-center">
+                                            <div className="flex flex-col items-center gap-4 grayscale opacity-40">
+                                                <Activity className="w-12 h-12" />
+                                                <p className="font-black text-sm uppercase tracking-widest">No patients in queue currently</p>
+                                            </div>
                                         </td>
                                     </tr>
                                 ) : (
                                     myPatients.map((patient) => (
-                                        <tr key={patient.id} className="hover:bg-slate-50/50 transition-colors">
-                                            <td className="px-6 py-4 text-sm font-mono text-slate-600">{patient.patientId || '---'}</td>
-                                            <td className="px-6 py-4">
-                                                <div className="flex items-center gap-3">
-                                                    <div className="w-8 h-8 bg-teal-100 text-teal-700 rounded-full flex items-center justify-center text-xs font-bold">
+                                        <tr key={patient.id} className="hover:bg-healthcare-bg/40 transition-colors group">
+                                            <td className="px-8 py-6">
+                                                <span className="font-mono text-xs font-bold bg-healthcare-bg border border-main px-3 py-1.5 rounded-lg text-healthcare-text-muted group-hover:text-healthcare-text transition-colors">
+                                                    {patient.patientId || '---'}
+                                                </span>
+                                            </td>
+                                            <td className="px-8 py-6">
+                                                <div className="flex items-center gap-4">
+                                                    <div className="w-12 h-12 bg-teal-500/10 text-teal-500 rounded-2xl flex items-center justify-center text-sm font-black border border-teal-500/20 shadow-sm shadow-teal-500/10">
                                                         {patient.patientName?.charAt(0)}
                                                     </div>
                                                     <div>
-                                                        <p className="font-medium text-slate-900">{patient.patientName}</p>
-                                                        <p className="text-xs text-slate-500">{patient.service}</p>
+                                                        <p className="font-black text-lg tracking-tight group-hover:text-teal-500 transition-colors">{patient.patientName}</p>
+                                                        <p className="text-[10px] text-healthcare-text-muted font-black uppercase tracking-widest mt-0.5">{patient.service}</p>
                                                     </div>
                                                 </div>
                                             </td>
-                                            <td className="px-6 py-4">
-                                                <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium capitalize
-                                            ${patient.status === 'serving' ? 'bg-blue-100 text-blue-800' :
-                                                        patient.status === 'completed' ? 'bg-green-100 text-green-800' :
-                                                            'bg-yellow-100 text-yellow-800'
+                                            <td className="px-8 py-6">
+                                                <span className={`inline-flex items-center px-4 py-1.5 rounded-xl text-[10px] font-black uppercase tracking-widest border
+                                            ${patient.status === 'serving' ? 'bg-blue-500/10 text-blue-500 border-blue-500/20' :
+                                                        patient.status === 'completed' ? 'bg-green-500/10 text-green-500 border-green-500/20' :
+                                                            'bg-yellow-500/10 text-yellow-500 border-yellow-500/20'
                                                     }`}>
                                                     {patient.status}
                                                 </span>
                                             </td>
-                                            <td className="px-6 py-4 text-sm text-slate-500">
-                                                15 mins
+                                            <td className="px-8 py-6">
+                                                <div className="flex items-center gap-2 text-healthcare-text-muted font-bold text-sm">
+                                                    <Clock className="w-4 h-4 text-teal-500/40" />
+                                                    15 mins
+                                                </div>
                                             </td>
-                                            <td className="px-6 py-4 text-right">
-                                                <div className="flex justify-end gap-2">
+                                            <td className="px-8 py-6 text-right">
+                                                <div className="flex justify-end gap-3">
                                                     {patient.status === 'waiting' && (
                                                         <button
                                                             onClick={() => handleStatusUpdate(patient.id, 'serving')}
-                                                            className="p-2 text-blue-600 hover:bg-blue-50 rounded-lg transition-colors"
+                                                            className="w-10 h-10 bg-blue-500/10 text-blue-500 border border-blue-500/20 rounded-xl flex items-center justify-center hover:bg-blue-500 hover:text-white transition-all shadow-sm"
                                                             title="Call Patient"
                                                         >
                                                             <Activity className="w-4 h-4" />
@@ -330,13 +364,13 @@ const StaffDashboard = () => {
                                                     {patient.status === 'serving' && (
                                                         <button
                                                             onClick={() => handleStatusUpdate(patient.id, 'completed')}
-                                                            className="p-2 text-green-600 hover:bg-green-50 rounded-lg transition-colors"
+                                                            className="w-10 h-10 bg-green-500/10 text-green-500 border border-green-500/20 rounded-xl flex items-center justify-center hover:bg-green-500 hover:text-white transition-all shadow-sm"
                                                             title="Complete Service"
                                                         >
                                                             <CheckCircle className="w-4 h-4" />
                                                         </button>
                                                     )}
-                                                    <button className="p-2 text-slate-400 hover:bg-slate-100 rounded-lg transition-colors">
+                                                    <button className="w-10 h-10 bg-healthcare-bg text-healthcare-text-muted border border-main rounded-xl flex items-center justify-center hover:bg-healthcare-surface hover:text-healthcare-text transition-all">
                                                         <FileText className="w-4 h-4" />
                                                     </button>
                                                 </div>
@@ -349,7 +383,7 @@ const StaffDashboard = () => {
                     </div>
                 </div>
             </main>
-        </div>
+        </div >
     );
 };
 

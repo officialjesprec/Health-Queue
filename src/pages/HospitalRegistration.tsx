@@ -9,6 +9,7 @@ import toast from 'react-hot-toast';
 const HospitalRegistration: React.FC = () => {
   const navigate = useNavigate();
   const { user } = useAuth();
+  const { registerHospitalProfile } = useQueue();
   const [loading, setLoading] = useState(false);
   const [hospitalIdInput, setHospitalIdInput] = useState('');
 
@@ -91,8 +92,10 @@ const HospitalRegistration: React.FC = () => {
 
         if (staffError) {
           console.error('Failed to create admin staff record:', staffError);
-          // We don't block the whole flow, but we should log it
         }
+
+        // --- NEW: Automatically create a medical card/profile for the creator ---
+        await registerHospitalProfile(hospital.id);
 
         setRegisteredHospital(hospital);
         toast.success('Hospital registered successfully!', { duration: 4000 });

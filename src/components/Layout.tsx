@@ -104,10 +104,17 @@ const Layout: React.FC<{ children: React.ReactNode }> = ({ children }) => {
     return 'Patient';
   };
 
+  // Determine Theme
+  const getTheme = () => {
+    if (staffData?.role === 'admin' || isAdmin) return 'admin';
+    if (isStaff) return 'staff';
+    return 'patient';
+  };
+
   // Render Auth Page Simplified Layout
   if (isAuthPage) {
     return (
-      <div className="min-h-screen bg-healthcare-bg">
+      <div className="min-h-screen bg-healthcare-bg" data-theme="patient">
         {children}
       </div>
     );
@@ -121,13 +128,14 @@ const Layout: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   ];
 
   return (
-    <div className="min-h-screen flex flex-col bg-healthcare-bg">
+    <div className="min-h-screen flex flex-col bg-healthcare-bg" data-theme={getTheme()}>
       {/* Header */}
       <header className={`border-b sticky top-0 z-50 shadow-sm transition-all duration-300 ${isActuallyStaff
         ? 'bg-slate-900 border-slate-800 text-white'
         : 'bg-white border-slate-200 text-slate-900'
-        }`}>        <div className="container-custom">
-          <div className="h-16 flex items-center justify-between">
+        }`}>
+        <div className="container-custom">
+          <div className="h-20 flex items-center justify-between"> {/* Increased header height for professional look */}
             {/* Logo */}
             <Link to="/" className="flex items-center gap-2 z-50 relative group">
               <Logo variant="full" width={40} height={40} showText={true} />
@@ -161,11 +169,14 @@ const Layout: React.FC<{ children: React.ReactNode }> = ({ children }) => {
                     Dashboard
                   </Link>
                   <div className="h-4 w-px bg-slate-700"></div>
-                  <div className="px-3 py-1 bg-teal-500/10 border border-teal-500/20 rounded-full">
-                    <span className="text-[10px] font-black uppercase tracking-widest text-teal-400">
+                  <Link
+                    to="/admin/hospital-dashboard"
+                    className="px-4 py-1.5 bg-teal-500/10 border border-teal-500/20 rounded-full hover:bg-teal-500/20 transition-all group"
+                  >
+                    <span className="text-[10px] font-black uppercase tracking-widest text-teal-400 group-hover:text-teal-300">
                       Hospital Management System
                     </span>
-                  </div>
+                  </Link>
                 </div>
               )}
 

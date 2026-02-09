@@ -2,6 +2,8 @@
 import React, { createContext, useContext, useState, useCallback, ReactNode, useEffect } from 'react';
 import { QueueItem, QueueContextType, QueueStatus, JourneyStage, User, Hospital, HQNotification } from '../types';
 import { INITIAL_QUEUE, HOSPITALS } from '../constants';
+import { supabase } from '../lib/supabase';
+import toast from 'react-hot-toast';
 
 const QueueContext = createContext<QueueContextType | undefined>(undefined);
 
@@ -153,7 +155,7 @@ export const QueueProvider: React.FC<{ children: ReactNode }> = ({ children }) =
     setQueue(prev => prev.map(item => item.id === id ? { ...item, ...updates } : item));
   }, []);
 
-  const registerUser = useCallback((userData: Partial<User>) => {
+  const registerUser = useCallback(async (userData: Partial<User>) => {
     setUser(prev => {
       const newUser = {
         id: prev?.id || Math.random().toString(36).substr(2, 9),
@@ -164,20 +166,70 @@ export const QueueProvider: React.FC<{ children: ReactNode }> = ({ children }) =
       } as User;
       return newUser;
     });
+
+    // If we have an authenticated user, we should ideally sync this to public.users
+    const { data: { session } } = await supabase.auth.getSession();
+    if (session?.user) {
+      try {
+        const { error } = await (supabase as any)
+          .from('users')
+          .update({
+            full_name: userData.fullName,
+            phone: userData.phone,
+            date_of_birth: userData.dateOfBirth,
+            gender: userData.gender,
+            address: userData.address,
+            next_of_kin: userData.nextOfKin
+          })
+          .eq('id', session.user.id);
+
+        if (error) console.error('Error syncing user to DB:', error);
+      } catch (err) {
+        console.error('Failed to sync user:', err);
+      }
+    }
   }, []);
 
-  const registerHospitalProfile = useCallback((hospitalId: string) => {
+  const registerHospitalProfile = useCallback(async (hospitalId: string) => {
     if (!user) return;
+
+    const cardId = `MED-${Math.floor(100000 + Math.random() * 900000)}`;
     const newProfile = {
       hospitalId,
-      cardId: `MED-${Math.floor(100000 + Math.random() * 900000)}`,
+      cardId,
       registrationDate: Date.now(),
       isPaid: true
     };
+
+    // Update local state
     setUser(prev => prev ? {
       ...prev,
       profiles: [...prev.profiles, newProfile]
     } : null);
+
+    // Persist to Supabase hospital_profiles
+    const { data: { session } } = await supabase.auth.getSession();
+    if (session?.user) {
+      try {
+        const { error } = await (supabase as any)
+          .from('hospital_profiles')
+          .insert({
+            user_id: session.user.id,
+            hospital_id: hospitalId,
+            card_id: cardId,
+            is_paid: true
+          });
+
+        if (error) {
+          console.error('Error saving hospital profile to DB:', error);
+          if (error.code !== '23505') { // Ignore unique constraint if they already have one
+            toast.error('Failed to save medical card online, but it is saved locally.');
+          }
+        }
+      } catch (err) {
+        console.error('Failed to persist profile:', err);
+      }
+    }
   }, [user]);
 
   const registerHospital = useCallback((hospital: Hospital) => {

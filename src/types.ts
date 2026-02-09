@@ -13,7 +13,8 @@ export enum JourneyStage {
   TRIAGE = 'Triage',
   BILLING = 'Billing',
   DOCTOR = 'Doctor',
-  PHARMACY = 'Pharmacy'
+  PHARMACY = 'Pharmacy',
+  COMPLETED = 'Completed'
 }
 
 export interface Hospital {
@@ -65,6 +66,7 @@ export interface QueueItem {
   timestamp: number;
   paymentStatus: 'Pending' | 'Paid' | 'Not Required';
   notified?: boolean; // Track if reminder was sent
+  assignedStaffId?: string; // ID of the staff member assigned to this patient
 }
 
 export interface HQNotification {
@@ -83,8 +85,8 @@ export interface QueueContextType {
   addQueueItem: (item: Omit<QueueItem, 'id' | 'ticketId' | 'timestamp' | 'stage' | 'status'>) => QueueItem;
   updateQueueItem: (id: string, updates: Partial<QueueItem>) => void;
   advanceQueue: (hospitalId: string, department: string) => void;
-  registerUser: (userData: Partial<User>) => void;
-  registerHospitalProfile: (hospitalId: string) => void;
+  registerUser: (userData: Partial<User>) => Promise<void>;
+  registerHospitalProfile: (hospitalId: string) => Promise<void>;
   registerHospital: (hospital: Hospital) => void;
   acceptBooking: (id: string) => void;
   dismissNotification: (id: string) => void;

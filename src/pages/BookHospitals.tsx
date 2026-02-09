@@ -88,8 +88,8 @@ const BookHospitals: React.FC = () => {
                                     key={dept}
                                     onClick={() => setSelectedDepartment(dept)}
                                     className={`px-4 py-2 rounded-xl font-bold whitespace-nowrap transition-all ${selectedDepartment === dept
-                                            ? 'bg-primary-600 text-white shadow-lg'
-                                            : 'bg-white text-slate-600 hover:bg-slate-50 border border-slate-200'
+                                        ? 'bg-primary-600 text-white shadow-lg'
+                                        : 'bg-white text-slate-600 hover:bg-slate-50 border border-slate-200'
                                         }`}
                                 >
                                     {dept}
@@ -194,9 +194,9 @@ const BookHospitals: React.FC = () => {
                                         {/* Action Button */}
                                         <button
                                             onClick={() => handleBookNow(hospital.id)}
-                                            className="w-full py-3 bg-primary-600 text-white font-bold rounded-xl hover:bg-primary-700 transition-all flex items-center justify-center gap-2 group-hover:shadow-lg group-hover:shadow-primary-200"
+                                            className="w-full py-4 bg-primary-600 text-white font-black uppercase text-xs tracking-widest rounded-xl hover:bg-primary-700 transition-all flex items-center justify-center gap-2 group-hover:shadow-lg group-hover:shadow-primary-200"
                                         >
-                                            <span>Book Appointment</span>
+                                            <span>Book Now</span>
                                             <ArrowRight className="w-5 h-5 group-hover:translate-x-1 transition-transform" />
                                         </button>
                                     </div>

@@ -99,7 +99,7 @@ const StaffLogin: React.FC = () => {
                                         type="text"
                                         required
                                         className="w-full p-4 pl-14 bg-slate-50 border-2 border-slate-100 rounded-xl outline-none focus:border-teal-500 focus:bg-white transition-all font-mono text-slate-900 uppercase placeholder:normal-case"
-                                        placeholder="HOSP-12345"
+                                        placeholder="SSS-12345"
                                         value={form.staffId}
                                         onChange={(e) => setForm({ ...form, staffId: e.target.value.toUpperCase() })}
                                     />

@@ -88,7 +88,8 @@ export const INITIAL_QUEUE: QueueItem[] = [
     date: new Date().toISOString().split('T')[0],
     isEmergency: false,
     timestamp: Date.now() - 3600000,
-    paymentStatus: 'Paid'
+    paymentStatus: 'Paid',
+    assignedStaffId: undefined
   },
   {
     id: 'q2',
@@ -104,6 +105,7 @@ export const INITIAL_QUEUE: QueueItem[] = [
     date: new Date().toISOString().split('T')[0],
     isEmergency: true,
     timestamp: Date.now() - 1800000,
-    paymentStatus: 'Paid'
+    paymentStatus: 'Paid',
+    assignedStaffId: undefined
   }
 ];

@@ -11,7 +11,7 @@ import toast from 'react-hot-toast';
 import { supabase } from '../lib/supabase';
 
 const PatientDashboard: React.FC = () => {
-  const { queue, user, hospitals } = useQueue();
+  const { queue, user, hospitals, staffMembers } = useQueue();
   const { signOut, isAuthenticated, loading: authLoading } = useAuth();
   const navigate = useNavigate();
   const myQueue = queue.filter(q => q.phone === user?.phone);
@@ -341,6 +341,75 @@ const PatientDashboard: React.FC = () => {
                         </Link>
                       </div>
                     </div>
+
+                    {/* Progress Bar & Assigned Staff */}
+                    {item.status !== QueueStatus.COMPLETED && (
+                      <div className="mt-6 pt-6 border-t border-slate-100">
+                        <div className="flex justify-between text-sm mb-2">
+                          <span className="text-slate-500 font-medium">Current Status</span>
+                          <span className="text-teal-700 font-bold">{item.stage}</span>
+                        </div>
+                        <div className="w-full bg-slate-100 rounded-full h-2.5 mb-4">
+                          <div
+                            className="bg-teal-500 h-2.5 rounded-full transition-all duration-1000 ease-out relative"
+                            style={{
+                              width: item.stage === 'triage' ? '33%' : item.stage === 'doctor' ? '66%' : '100%'
+                            }}
+                          >
+                            <div className="absolute top-0 right-0 -mt-1 -mr-1 w-4 h-4 bg-white border-2 border-teal-500 rounded-full animate-pulse"></div>
+                          </div>
+                        </div>
+
+                        {item.assignedStaffId && (
+                          <div className="flex items-center gap-3 bg-slate-50 p-3 rounded-xl border border-slate-100">
+                            <div className="w-8 h-8 rounded-full bg-white border border-slate-200 flex items-center justify-center text-teal-600 font-bold text-xs">
+                              ST
+                            </div>
+                            <div>
+                              <p className="text-[10px] uppercase font-black text-slate-400 leading-none mb-1">Assigned Staff</p>
+                              <p className="text-sm font-bold text-slate-700 leading-none">
+                                {staffMembers.find(s => s.id === item.assignedStaffId)?.full_name || 'Staff Member'}
+                              </p>
+                            </div>
+                          </div>
+                        )}
+                      </div>
+                    )}
+
+
+                    {/* Progress Bar & Assigned Staff */}
+                    {item.status !== QueueStatus.COMPLETED && (
+                      <div className="mt-6 pt-6 border-t border-slate-100">
+                        <div className="flex justify-between text-sm mb-2">
+                          <span className="text-slate-500 font-medium">Current Status</span>
+                          <span className="text-teal-700 font-bold">{item.stage}</span>
+                        </div>
+                        <div className="w-full bg-slate-100 rounded-full h-2.5 mb-4">
+                          <div
+                            className="bg-teal-500 h-2.5 rounded-full transition-all duration-1000 ease-out relative"
+                            style={{
+                              width: item.stage === 'triage' ? '33%' : item.stage === 'doctor' ? '66%' : '100%'
+                            }}
+                          >
+                            <div className="absolute top-0 right-0 -mt-1 -mr-1 w-4 h-4 bg-white border-2 border-teal-500 rounded-full animate-pulse"></div>
+                          </div>
+                        </div>
+
+                        {item.assignedStaffId && (
+                          <div className="flex items-center gap-3 bg-slate-50 p-3 rounded-xl border border-slate-100">
+                            <div className="w-8 h-8 rounded-full bg-white border border-slate-200 flex items-center justify-center text-teal-600 font-bold text-xs">
+                              ST
+                            </div>
+                            <div>
+                              <p className="text-[10px] uppercase font-black text-slate-400 leading-none mb-1">Assigned Staff</p>
+                              <p className="text-sm font-bold text-slate-700 leading-none">
+                                {staffMembers.find(s => s.id === item.assignedStaffId)?.full_name || 'Staff Member'}
+                              </p>
+                            </div>
+                          </div>
+                        )}
+                      </div>
+                    )}
                   </div>
                 ))
               )}

@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { useParams, useNavigate, useLocation } from 'react-router-dom';
+import { useParams, useNavigate, useLocation, Link } from 'react-router-dom';
 import { useQueue } from '../store/QueueContext';
 import { useAuth, useIsAdmin } from '../hooks/useAuth';
 import { QueueStatus, JourneyStage, QueueItem, Hospital } from '../types';
@@ -51,7 +51,8 @@ const AdminDashboard: React.FC = () => {
 
     setStaffCreating(true);
     try {
-      const prefix = hospital.name.substring(0, 3).toUpperCase().replace(/[^A-Z]/g, 'X');
+      // Refined Prefix: 3 letters of hospital + 5 digits
+      const prefix = hospital.name.slice(0, 3).toUpperCase().padEnd(3, 'X');
       const randomNum = Math.floor(10000 + Math.random() * 90000);
       const staffCode = `${prefix}-${randomNum}`;
       const dummyEmail = `staff_${staffCode.toLowerCase()}_${Date.now()}@healthqueue.local`;
@@ -90,6 +91,14 @@ const AdminDashboard: React.FC = () => {
 
         if (dbError) throw dbError;
 
+        // Fetch staff list immediately to update the UI
+        const { data: updatedStaff } = await supabase
+          .from('staff')
+          .select('*')
+          .eq('hospital_id', hospital.id);
+
+        if (updatedStaff) setStaffMembers(updatedStaff);
+
         const staffResult = {
           name: newStaff.name,
           code: staffCode,
@@ -108,6 +117,24 @@ const AdminDashboard: React.FC = () => {
       toast.error(error.message || 'Failed to create staff account');
     } finally {
       setStaffCreating(false);
+    }
+  };
+
+  const handleRemoveStaff = async (staffId: string) => {
+    if (!window.confirm('Are you sure you want to remove this staff member?')) return;
+
+    try {
+      const { error } = await supabase
+        .from('staff')
+        .delete()
+        .eq('id', staffId);
+
+      if (error) throw error;
+
+      setStaffMembers(prev => prev.filter(s => s.id !== staffId));
+      toast.success('Staff member removed successfully');
+    } catch (err: any) {
+      toast.error(err.message || 'Failed to remove staff');
     }
   };
 
@@ -298,6 +325,23 @@ const AdminDashboard: React.FC = () => {
     }
   };
 
+  const handleAssignStaff = async (queueId: string, staffId: string) => {
+    try {
+      const { error } = await supabase
+        .from('queue_items')
+        .update({ assigned_staff_id: staffId || null })
+        .eq('id', queueId);
+
+      if (error) throw error;
+
+      updateQueueItem(queueId, { assignedStaffId: staffId });
+      toast.success('Staff assigned successfully');
+    } catch (error) {
+      console.error('Error assigning staff:', error);
+      toast.error('Failed to assign staff');
+    }
+  };
+
   const handleAddWalkIn = () => {
     if (!walkInName || !walkInService) return;
     addQueueItem({
@@ -320,8 +364,10 @@ const AdminDashboard: React.FC = () => {
     <div className="space-y-8">
       <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-6">
         <div>
-          <h1 className="text-2xl font-black text-slate-900 tracking-tight">{hospital.name}</h1>
-          <p className="text-slate-500 font-bold uppercase text-[10px] tracking-widest mt-1">Active Staff Portal - {selectedDept}</p>
+          <h1 className="text-4xl font-black text-slate-900 mb-2 leading-tight">
+            Welcome, <span className="text-teal-600">Dr. {adminData?.full_name || 'Admin'}</span>
+          </h1>
+          <p className="text-slate-500 font-medium text-lg">Here's what's happening at your facility today.</p>
         </div>
 
         <div className="flex flex-wrap items-center gap-3">
@@ -389,15 +435,15 @@ const AdminDashboard: React.FC = () => {
                 </div>
                 <h3 className="text-xl font-black text-slate-900 mb-2">Manage Hospital</h3>
                 <p className="text-slate-500 text-sm font-medium mb-8 leading-relaxed">
-                  Update your facility profile, departments, and queue settings.
+                  Comprehensive Hospital Management System: Records, Staffing, and more.
                 </p>
-                <button
-                  onClick={() => setActiveTab('queue')}
-                  className="w-full py-4 bg-slate-900 text-white font-black rounded-2xl flex items-center justify-center gap-2 hover:bg-slate-800 transition-all"
+                <Link
+                  to="/admin/hospital-dashboard"
+                  className="w-full py-4 bg-slate-900 text-white font-black rounded-2xl flex items-center justify-center gap-2 hover:bg-slate-800 transition-all cursor-pointer"
                 >
-                  Open Dashboard
+                  Open HMS Portal
                   <ChevronRight className="w-4 h-4" />
-                </button>
+                </Link>
               </div>
             </div>
 
@@ -514,6 +560,7 @@ const AdminDashboard: React.FC = () => {
                     <th className="px-8 py-5">Patient Details</th>
                     <th className="px-6 py-5">Service</th>
                     <th className="px-6 py-5">Status</th>
+                    <th className="px-6 py-5">Assigned Staff</th>
                     <th className="px-6 py-5">Journey</th>
                     <th className="px-8 py-5 text-right">Action</th>
                   </tr>
@@ -532,6 +579,21 @@ const AdminDashboard: React.FC = () => {
                         </td>
                         <td className="px-6 py-6 font-black text-teal-700">{item.service}</td>
                         <td className="px-6 py-6 font-black uppercase text-[10px] tracking-widest text-emerald-700">{item.paymentStatus}</td>
+                        <td className="px-6 py-6">
+                          <select
+                            className="bg-slate-50 border border-slate-200 text-slate-700 text-xs rounded-lg focus:ring-teal-500 focus:border-teal-500 block w-full p-2.5"
+                            value={item.assignedStaffId || ''}
+                            onClick={(e) => e.stopPropagation()}
+                            onChange={(e) => handleAssignStaff(item.id, e.target.value)}
+                          >
+                            <option value="">Select Staff</option>
+                            {staffMembers.map((staff) => (
+                              <option key={staff.id} value={staff.id}>
+                                {staff.full_name} ({staff.role})
+                              </option>
+                            ))}
+                          </select>
+                        </td>
                         <td className="px-6 py-6 text-xs font-bold text-slate-700">{item.stage}</td>
                         <td className="px-8 py-6 text-right">
                           {isToday && item.status !== QueueStatus.COMPLETED && (
@@ -594,19 +656,33 @@ const AdminDashboard: React.FC = () => {
           <div className="bg-white rounded-[2.5rem] border border-slate-200 shadow-sm overflow-hidden">
             <table className="w-full text-left">
               <thead className="bg-slate-50 text-slate-400 text-[9px] uppercase font-black tracking-widest border-b border-slate-200">
-                <tr><th className="px-8 py-5">Staff</th><th className="px-6 py-5">Role</th><th className="px-6 py-5">Code</th><th className="px-8 py-5 text-right">Joined</th></tr>
+                <tr><th className="px-8 py-5">Staff</th><th className="px-6 py-5">Role</th><th className="px-6 py-5">Code</th><th className="px-6 py-5 text-center">Actions</th><th className="px-8 py-5 text-right">Joined</th></tr>
               </thead>
               <tbody className="divide-y divide-slate-100">
                 {staffLoading ? (
-                  <tr><td colSpan={4} className="px-8 py-20 text-center text-slate-500">Loading staff...</td></tr>
+                  <tr><td colSpan={5} className="px-8 py-20 text-center text-slate-500">Loading staff...</td></tr>
                 ) : staffMembers.length === 0 ? (
-                  <tr><td colSpan={4} className="px-8 py-20 text-center text-slate-400">No staff yet.</td></tr>
+                  <tr><td colSpan={5} className="px-8 py-20 text-center text-slate-400">No staff yet.</td></tr>
                 ) : (
                   staffMembers.map(s => (
-                    <tr key={s.id} className="hover:bg-slate-50/50 transition-colors">
-                      <td className="px-8 py-6 font-bold text-slate-700">{s.full_name}</td>
+                    <tr key={s.id} className="hover:bg-slate-50/50 transition-colors group">
+                      <td className="px-8 py-6">
+                        <div className="flex flex-col">
+                          <span className="font-bold text-slate-900">{s.full_name}</span>
+                          <span className="text-[10px] text-slate-400 font-medium">{s.email}</span>
+                        </div>
+                      </td>
                       <td className="px-6 py-6 uppercase text-[10px] font-black text-indigo-600">{s.role}</td>
                       <td className="px-6 py-6 font-mono font-bold text-slate-400">{s.staff_code}</td>
+                      <td className="px-6 py-6 text-center">
+                        <button
+                          onClick={() => handleRemoveStaff(s.id)}
+                          className="p-2 text-red-400 hover:text-red-600 hover:bg-red-50 rounded-lg transition-all opacity-0 group-hover:opacity-100"
+                          title="Remove Staff"
+                        >
+                          <LogOut className="w-4 h-4 rotate-180" />
+                        </button>
+                      </td>
                       <td className="px-8 py-6 text-right text-xs font-bold text-slate-400">{new Date(s.created_at).toLocaleDateString()}</td>
                     </tr>
                   ))

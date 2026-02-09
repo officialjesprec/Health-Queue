@@ -30,11 +30,11 @@
   --color-success-700: #15803d;
   --color-success-800: #166534;
 
-  --color-healthcare-bg: #f8fafc;
-  /* Slightly better contrast */
-  --color-healthcare-surface: #ffffff;
-  --color-healthcare-text: #0f172a;
-  --color-healthcare-text-muted: #64748b;
+  /* Theme variables mapped back to colors */
+  --color-healthcare-bg: var(--bg-main);
+  --color-healthcare-surface: var(--bg-surface);
+  --color-healthcare-text: var(--text-main);
+  --color-healthcare-text-muted: var(--text-muted);
 
   /* Fonts */
   --font-heading: 'Figtree', system-ui, sans-serif;
@@ -42,12 +42,45 @@
 
   /* Border Radius */
   --radius-medical: 16px;
-  /* More modern, softer feel */
+}
+
+/* Theme Variables Configuration */
+:root {
+  /* Default / Patient Theme (Clean White) */
+  --bg-main: #f8fafc;
+  --bg-surface: #ffffff;
+  --bg-card: #ffffff;
+  --text-main: #0f172a;
+  --text-muted: #64748b;
+  --border-main: #e2e8f0;
+  --accent-main: #0891b2;
+}
+
+[data-theme="staff"] {
+  /* Staff Theme (Deep Professional Dark) */
+  --bg-main: #0a0f18;
+  --bg-surface: #111827;
+  --bg-card: #1f2937;
+  --text-main: #f8fafc;
+  --text-muted: #94a3b8;
+  --border-main: #334155;
+  --accent-main: #22d3ee;
+}
+
+[data-theme="admin"] {
+  /* Admin Theme (Lighter Dark / Tinted Slate) */
+  --bg-main: #0f172a;
+  --bg-surface: #1e293b;
+  --bg-card: #334155;
+  --text-main: #f1f5f9;
+  --text-muted: #94a3b8;
+  --border-main: #475569;
+  --accent-main: #06b6d4;
 }
 
 /* Base Styles */
 * {
-  border-color: rgb(226 232 240);
+  border-color: var(--border-main);
 }
 
 html {
@@ -58,23 +91,20 @@ html {
 }
 
 body {
-  background-color: var(--color-healthcare-bg);
-  color: var(--color-healthcare-text);
+  background-color: var(--bg-main);
+  color: var(--text-main);
   min-height: 100vh;
   line-height: 1.6;
+  transition: background-color 0.3s cubic-bezier(0.4, 0, 0.2, 1), 
+              color 0.3s cubic-bezier(0.4, 0, 0.2, 1);
 }
 
 /* Typography Scale */
-h1,
-h2,
-h3,
-h4,
-h5,
-h6 {
+h1, h2, h3, h4, h5, h6 {
   font-family: var(--font-heading);
   font-weight: 700;
   line-height: 1.2;
-  color: var(--color-primary-900);
+  color: var(--text-main);
 }
 
 h1 {
@@ -173,25 +203,24 @@ h6 {
 }
 
 .btn-outline {
-  background-color: white;
-  border: 2px solid var(--color-primary-100);
-  color: var(--color-primary-700);
+  background-color: var(--bg-surface);
+  border: 2px solid var(--border-main);
+  color: var(--text-main);
 }
 
 .btn-outline:hover {
-  border-color: var(--color-primary-500);
-  background-color: var(--color-primary-50);
-  color: var(--color-primary-800);
+  border-color: var(--accent-main);
+  background-color: var(--bg-main);
 }
 
 .btn-ghost {
   background-color: transparent;
-  color: var(--color-healthcare-text-muted);
+  color: var(--text-muted);
 }
 
 .btn-ghost:hover {
-  background-color: var(--color-primary-50);
-  color: var(--color-primary-700);
+  background-color: var(--bg-surface);
+  color: var(--text-main);
 }
 
 .btn-sm {
@@ -209,39 +238,39 @@ h6 {
 
 /* Card Styles - Pure & Clean */
 .card {
-  background-color: var(--color-healthcare-surface);
+  background-color: var(--bg-card);
   border-radius: var(--radius-medical);
-  box-shadow: 0 1px 3px 0 rgb(0 0 0 / 0.1), 0 1px 2px -1px rgb(0 0 0 / 0.1);
-  padding: 2rem;
-  border: 1px solid rgb(241 245 249);
+  box-shadow: 0 4px 6px -1px rgb(0 0 0 / 0.05), 0 2px 4px -2px rgb(0 0 0 / 0.05);
+  padding: 2.5rem; /* Increased padding for professional HMS look */
+  border: 1px solid var(--border-main);
   transition: all 0.3s ease;
 }
 
 .card-hover:hover {
   box-shadow: 0 20px 25px -5px rgb(0 0 0 / 0.1), 0 8px 10px -6px rgb(0 0 0 / 0.1);
   transform: translateY(-4px);
-  border-color: var(--color-primary-200);
+  border-color: var(--accent-main);
 }
 
 /* Form Styles */
 .input {
   width: 100%;
   padding: 0.75rem 1rem;
-  background-color: var(--color-healthcare-surface);
-  border: 1.5px solid rgb(203 213 225);
+  background-color: var(--bg-surface);
+  border: 1.5px solid var(--border-main);
   border-radius: 12px;
   font-size: 1rem;
-  color: var(--color-healthcare-text);
+  color: var(--text-main);
   transition: all 0.2s;
   min-height: 48px;
 }
 
 .input:hover {
-  border-color: rgb(148 163 184);
+  border-color: var(--text-muted);
 }
 
 .input:focus {
-  border-color: var(--color-primary-500);
+  border-color: var(--accent-main);
   box-shadow: 0 0 0 4px rgba(8, 145, 178, 0.1);
   outline: none;
 }
@@ -250,7 +279,7 @@ h6 {
   display: block;
   font-size: 0.875rem;
   font-weight: 600;
-  color: var(--color-primary-900);
+  color: var(--text-main);
   margin-bottom: 0.5rem;
 }
 

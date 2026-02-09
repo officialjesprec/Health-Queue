@@ -50,20 +50,28 @@ export function useHospital(hospitalId: string) {
     const [error, setError] = useState<Error | null>(null);
 
     useEffect(() => {
-        if (!hospitalId) return;
+        if (!hospitalId) {
+            setLoading(false);
+            return;
+        }
 
         const fetchHospital = async () => {
             try {
                 setLoading(true);
+                setError(null);
                 const { data, error } = await supabase
                     .from('hospitals')
                     .select('*')
                     .eq('id', hospitalId)
-                    .single();
+                    .maybeSingle();
 
                 if (error) throw error;
+                if (!data) {
+                    console.warn(`Hospital with ID ${hospitalId} not found in Supabase`);
+                }
                 setHospital(data);
             } catch (err) {
+                console.error('Error in useHospital:', err);
                 setError(err as Error);
             } finally {
                 setLoading(false);

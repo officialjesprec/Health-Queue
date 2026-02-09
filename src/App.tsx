@@ -31,7 +31,8 @@ const StaffDashboard = React.lazy(() => import('./pages/StaffDashboard'));
 const HospitalRegistration = React.lazy(() => import('./pages/HospitalRegistration'));
 const CaregiverView = React.lazy(() => import('./pages/CaregiverView'));
 
-// Auth Pages
+const HospitalDashboard = React.lazy(() => import('./pages/HospitalDashboard'));
+
 const PatientLogin = React.lazy(() => import('./pages/auth/PatientLogin'));
 const PatientSignup = React.lazy(() => import('./pages/auth/PatientSignup'));
 const HospitalLogin = React.lazy(() => import('./pages/auth/HospitalLogin'));
@@ -97,6 +98,14 @@ const App: React.FC = () => {
                     element={
                       <ProtectedRoute allowedRoles={['admin']}>
                         <AdminDashboard />
+                      </ProtectedRoute>
+                    }
+                  />
+                  <Route
+                    path="/admin/hospital-dashboard"
+                    element={
+                      <ProtectedRoute allowedRoles={['admin']}>
+                        <HospitalDashboard />
                       </ProtectedRoute>
                     }
                   />
