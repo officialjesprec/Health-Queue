@@ -18,7 +18,7 @@ const HospitalLogin: React.FC = () => {
 
     const [showPassword, setShowPassword] = useState(false);
     const [form, setForm] = useState({
-        email: emailParam,
+        identifier: emailParam,
         password: '',
     });
     const [error, setError] = useState('');
@@ -29,8 +29,27 @@ const HospitalLogin: React.FC = () => {
         setLoading(true);
 
         try {
+            let emailToUse = form.identifier.trim();
+            const isEmail = emailToUse.includes('@');
+
+            // If input is NOT an email, assume it's a Staff ID and lookup the email
+            if (!isEmail) {
+                const { data, error: lookupError } = await supabase
+                    .from('staff')
+                    .select('email')
+                    .ilike('staff_code', emailToUse) // Case-insensitive lookup
+                    .single();
+
+                const staffLookup = data as any;
+
+                if (lookupError || !staffLookup?.email) {
+                    throw new Error('Invalid Staff ID or Email');
+                }
+                emailToUse = staffLookup.email;
+            }
+
             // Step 1: Authenticate the user
-            const authData = await signIn(form.email, form.password);
+            const authData = await signIn(emailToUse, form.password);
 
             // Step 2: Verify user is in staff table (CRITICAL SECURITY CHECK)
             const { data: staffData, error: staffError } = await supabase
@@ -75,10 +94,10 @@ const HospitalLogin: React.FC = () => {
             console.error('Hospital Login Error:', err);
 
             let message = 'Login failed. Please try again.';
-            if (err.message === 'Invalid login credentials') {
-                message = 'Invalid email or password.';
+            if (err.message === 'Invalid login credentials' || err.message === 'Invalid Staff ID or Email') {
+                message = 'Invalid Staff ID, Email or Password.';
             } else if (err.message.includes('Email not confirmed')) {
-                message = 'Please check your email to confirm your account.';
+                message = 'Please check your email/account status.';
             } else {
                 message = err.message || message;
             }
@@ -136,16 +155,16 @@ const HospitalLogin: React.FC = () => {
 
                     <form onSubmit={handleSubmit} className="space-y-6">
                         <div>
-                            <label className="text-xs font-bold uppercase text-slate-500 tracking-wider ml-1 mb-1 block">Work Email</label>
+                            <label className="text-xs font-bold uppercase text-slate-500 tracking-wider ml-1 mb-1 block">Staff ID or Email</label>
                             <div className="relative group">
                                 <Mail className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-slate-400 group-focus-within:text-teal-500 transition-colors" />
                                 <input
-                                    type="email"
+                                    type="text"
                                     required
                                     className="w-full p-4 pl-12 bg-slate-50 border-2 border-slate-100 rounded-2xl outline-none focus:border-teal-500 focus:bg-white transition-all font-bold text-slate-900"
-                                    placeholder="admin@hospital.com"
-                                    value={form.email}
-                                    onChange={(e) => setForm({ ...form, email: e.target.value })}
+                                    placeholder="email@hospital.com or CED-89123"
+                                    value={form.identifier}
+                                    onChange={(e) => setForm({ ...form, identifier: e.target.value })}
                                 />
                             </div>
                         </div>

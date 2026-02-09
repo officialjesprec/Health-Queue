@@ -8,6 +8,9 @@ import { HOSPITALS } from '../constants';
 import { supabase } from '../lib/supabase';
 import InfoTooltip from '../components/InfoTooltip';
 
+import { createClient } from '@supabase/supabase-js';
+import toast from 'react-hot-toast';
+
 const AdminDashboard: React.FC = () => {
   const { hospitalId } = useParams();
   const navigate = useNavigate();
@@ -22,6 +25,85 @@ const AdminDashboard: React.FC = () => {
   const [walkInName, setWalkInName] = useState('');
   const [walkInService, setWalkInService] = useState('');
   const [viewDate, setViewDate] = useState(new Date().toISOString().split('T')[0]);
+
+  // Staff Creation State
+  const [showStaffModal, setShowStaffModal] = useState(false);
+  const [staffCreating, setStaffCreating] = useState(false);
+  const [newStaff, setNewStaff] = useState({ name: '', role: 'nurse', password: '' });
+
+  // Handle Staff Creation (using temporary client)
+  const handleAddStaff = async () => {
+    if (!newStaff.name || !newStaff.password || !hospital) {
+      toast.error('Please fill all fields');
+      return;
+    }
+
+    setStaffCreating(true);
+    try {
+      // Generate Staff ID (HospitalPrefix-Random)
+      const prefix = hospital.name.substring(0, 3).toUpperCase().replace(/[^A-Z]/g, 'X');
+      const randomNum = Math.floor(10000 + Math.random() * 90000); // 5 digits
+      const staffCode = `${prefix}-${randomNum}`; // e.g., CED-58392
+
+      // Create Dummy Email for Auth
+      // Using a consistent fake domain ensures we don't accidentally email real people
+      const dummyEmail = `staff_${staffCode.toLowerCase()}_${Date.now()}@healthqueue.local`;
+
+      // Create Temp Client for Auth Creation to avoid logging out the Admin
+      const tempClient = createClient(
+        (import.meta as any).env.VITE_SUPABASE_URL,
+        (import.meta as any).env.VITE_SUPABASE_ANON_KEY
+      );
+
+      // Sign Up User (Creates auth.users record)
+      const { data: authData, error: authError } = await tempClient.auth.signUp({
+        email: dummyEmail,
+        password: newStaff.password,
+        options: {
+          data: {
+            full_name: newStaff.name,
+            role: newStaff.role,
+            staff_code: staffCode,
+            hospital_id: hospital.id
+          }
+        }
+      });
+
+      if (authError) throw authError;
+
+      if (authData.user) {
+        // Insert into Public Staff Table (using main Client)
+        // Note: DB Trigger 010 prevents insertion into public.users
+        // So we manually insert into public.staff here
+        const { error: dbError } = await supabase
+          .from('staff')
+          .insert({
+            id: authData.user.id,
+            hospital_id: hospital.id,
+            full_name: newStaff.name,
+            role: newStaff.role,
+            staff_code: staffCode,
+            email: dummyEmail
+          } as any);
+
+        if (dbError) throw dbError;
+
+        // Success Feedback
+        toast.success(`Staff Account Created!\nID: ${staffCode}`, { duration: 8000, icon: '👨‍⚕️' });
+        setShowStaffModal(false);
+        setNewStaff({ name: '', role: 'nurse', password: '' });
+
+        // Alert with credentials (critical for User to see)
+        alert(`IMPORTANT CREDENTIALS:\n\nStaff Name: ${newStaff.name}\nLogin ID: ${staffCode}\nPassword: ${newStaff.password}\n\nPlease share these credentials securely with the staff member.`);
+      }
+
+    } catch (error: any) {
+      console.error('Staff creation failed:', error);
+      toast.error(error.message || 'Failed to create staff account');
+    } finally {
+      setStaffCreating(false);
+    }
+  };
 
   // Fetch hospital data from Supabase
   useEffect(() => {
@@ -69,14 +151,15 @@ const AdminDashboard: React.FC = () => {
 
         if (data) {
           // Map Supabase data to Hospital type
+          const hospitalData = data as any;
           const mappedHospital: Hospital = {
-            id: data.id,
-            name: data.name,
-            location: data.location,
-            departments: (data.departments as any) || ['OPD'],
-            services: (data.services as any) || {},
-            registrationFee: data.registration_fee || 0,
-            isOpen: data.is_open !== false,
+            id: hospitalData.id,
+            name: hospitalData.name,
+            location: hospitalData.location,
+            departments: hospitalData.departments || ['OPD'],
+            services: hospitalData.services || {},
+            registrationFee: hospitalData.registration_fee || 0,
+            isOpen: hospitalData.is_open !== false,
           };
           setHospital(mappedHospital);
         }
@@ -208,6 +291,13 @@ const AdminDashboard: React.FC = () => {
               <span className="text-sm">Call Next</span>
             </button>
           )}
+          <button
+            onClick={() => setShowStaffModal(true)}
+            className="px-4 py-2.5 bg-indigo-600 text-white font-black rounded-xl hover:bg-indigo-700 flex items-center space-x-2 transition-all shadow-lg shadow-indigo-100 active:scale-95"
+          >
+            <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M18 9v3m0 0v3m0-3h3m-3 0h-3m-2-5a4 4 0 11-8 0 4 4 0 018 0zM3 20a6 6 0 0112 0v1H3v-1z" /></svg>
+            <span className="text-sm">Add Staff</span>
+          </button>
           <button
             onClick={() => {
               signOut();
@@ -356,6 +446,44 @@ const AdminDashboard: React.FC = () => {
               <div className="flex space-x-3 pt-4">
                 <button onClick={() => setShowWalkInModal(false)} className="flex-1 py-4 text-slate-500 font-bold">Cancel</button>
                 <button onClick={handleAddWalkIn} className="flex-1 py-4 bg-slate-900 text-white rounded-2xl font-black">Add</button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {showStaffModal && (
+        <div className="fixed inset-0 bg-slate-900/60 backdrop-blur-sm flex items-center justify-center p-4 z-[100] animate-in fade-in duration-300">
+          <div className="bg-white rounded-[2.5rem] p-8 max-w-md w-full shadow-2xl border border-slate-100">
+            <h2 className="text-2xl font-black text-slate-900 mb-2">Create Staff Account</h2>
+            <p className="text-slate-500 text-sm font-medium mb-6">Staff will use this ID to log in.</p>
+
+            <div className="space-y-4">
+              <div>
+                <label className="text-[10px] font-black uppercase text-slate-400 tracking-[0.2em] ml-2">Full Name</label>
+                <input className="w-full p-4 bg-slate-50 border-2 border-slate-100 rounded-2xl font-bold" value={newStaff.name} onChange={e => setNewStaff({ ...newStaff, name: e.target.value })} placeholder="e.g. Nurse Joy" />
+              </div>
+
+              <div>
+                <label className="text-[10px] font-black uppercase text-slate-400 tracking-[0.2em] ml-2">Role</label>
+                <select className="w-full p-4 bg-slate-50 border-2 border-slate-100 rounded-2xl font-bold text-slate-700" value={newStaff.role} onChange={e => setNewStaff({ ...newStaff, role: e.target.value })}>
+                  <option value="doctor">Doctor</option>
+                  <option value="nurse">Nurse</option>
+                  <option value="receptionist">Receptionist</option>
+                  <option value="pharmacist">Pharmacist</option>
+                </select>
+              </div>
+
+              <div>
+                <label className="text-[10px] font-black uppercase text-slate-400 tracking-[0.2em] ml-2">Password</label>
+                <input className="w-full p-4 bg-slate-50 border-2 border-slate-100 rounded-2xl font-bold" type="text" value={newStaff.password} onChange={e => setNewStaff({ ...newStaff, password: e.target.value })} placeholder="Set a strong password" />
+              </div>
+
+              <div className="flex space-x-3 pt-4">
+                <button onClick={() => setShowStaffModal(false)} className="flex-1 py-4 text-slate-500 font-bold">Cancel</button>
+                <button onClick={handleAddStaff} disabled={staffCreating} className="flex-1 py-4 bg-indigo-600 text-white rounded-2xl font-black disabled:opacity-50">
+                  {staffCreating ? 'Creating...' : 'Create Staff'}
+                </button>
               </div>
             </div>
           </div>
