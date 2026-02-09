@@ -41,6 +41,16 @@ const HospitalLogin: React.FC = () => {
 
             // If user is NOT in staff table, they're a patient trying to access admin portal
             if (staffError || !staffData) {
+                // RECOVERY: Check if user has 'hospital_admin' role in metadata
+                // This allows admins to complete registration if they got stuck or DB was reset
+                const userRole = authData.user?.user_metadata?.role;
+                if (userRole === 'hospital_admin') {
+                    toast.success('Please complete your hospital registration.');
+                    navigate('/register-hospital');
+                    setLoading(false);
+                    return;
+                }
+
                 // Sign them out immediately
                 await supabase.auth.signOut();
                 setError('Access Denied: This login is for hospital staff only. Please use the patient login instead.');
