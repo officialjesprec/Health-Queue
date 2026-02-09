@@ -35,9 +35,14 @@ const Layout: React.FC<{ children: React.ReactNode }> = ({ children }) => {
 
     if (staffLoading) return; // Wait for staff check to complete
 
-    if (isStaff && staffData?.hospital_id) {
-      // Staff user - go to their hospital's admin dashboard
-      navigate(`/admin/${staffData.hospital_id}/dashboard`);
+    if (isStaff) {
+      if (staffData?.role === 'admin' && staffData.hospital_id) {
+        // Admin -> Hospital Dashboard
+        navigate(`/admin/${staffData.hospital_id}/dashboard`);
+      } else {
+        // Staff -> Staff Dashboard
+        navigate('/staff/dashboard');
+      }
     } else {
       // Regular patient - go to patient dashboard
       navigate('/dashboard');
@@ -84,7 +89,7 @@ const Layout: React.FC<{ children: React.ReactNode }> = ({ children }) => {
                     </>
                   ) : (
                     <>
-                      <Link to="/register-hospital" className="text-sm font-bold text-slate-500 hover:text-teal-600 mr-2">
+                      <Link to="/partner" className="text-sm font-bold text-slate-500 hover:text-teal-600 mr-2">
                         For Hospitals
                       </Link>
                       <Link to="/auth/login" className="btn-ghost btn-sm">

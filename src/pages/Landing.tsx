@@ -28,7 +28,7 @@ const Landing: React.FC = () => {
                                     <Link to="/hospitals" className="btn-primary">Book Now</Link>
                                 </>
                             )}
-                            <Link to="/register-hospital" className="text-sm font-bold text-slate-500 hover:text-teal-600 ml-2">For Hospitals</Link>
+                            <Link to="/partner" className="text-sm font-bold text-slate-500 hover:text-teal-600 ml-2">For Hospitals</Link>
                         </div>
                     </div>
                 </div>

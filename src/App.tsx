@@ -16,13 +16,16 @@ const PageLoader = () => (
 
 // Lazy Loaded Pages
 const Landing = React.lazy(() => import('./pages/Landing'));
+const HospitalWelcome = React.lazy(() => import('./pages/HospitalWelcome')); // New
 const PatientHome = React.lazy(() => import('./pages/PatientHome'));
 const BookingFlow = React.lazy(() => import('./pages/BookingFlow'));
 const BookHospitals = React.lazy(() => import('./pages/BookHospitals'));
 const QueueStatus = React.lazy(() => import('./pages/QueueStatus'));
-const AdminDashboard = React.lazy(() => import('./pages/AdminDashboard'));
 const PatientDashboard = React.lazy(() => import('./pages/PatientDashboard'));
+const AdminDashboard = React.lazy(() => import('./pages/AdminDashboard'));
 const AdminLogin = React.lazy(() => import('./pages/AdminLogin'));
+const StaffLogin = React.lazy(() => import('./pages/auth/StaffLogin')); // New
+const StaffDashboard = React.lazy(() => import('./pages/StaffDashboard')); // New
 const HospitalRegistration = React.lazy(() => import('./pages/HospitalRegistration'));
 const CaregiverView = React.lazy(() => import('./pages/CaregiverView'));
 
@@ -44,6 +47,9 @@ const App: React.FC = () => {
                 <Route path="/" element={<PatientHome />} />
                 <Route path="/landing" element={<Landing />} />
 
+                {/* Partner Portal Landing */}
+                <Route path="/partner" element={<HospitalWelcome />} />
+
                 {/* Auth Routes */}
                 <Route path="/auth/login" element={<PatientLogin />} />
                 <Route path="/auth/signup" element={<PatientSignup />} />
@@ -51,6 +57,9 @@ const App: React.FC = () => {
                 {/* Hospital Auth Routes */}
                 <Route path="/hospital/signup" element={<HospitalSignup />} />
                 <Route path="/hospital/login" element={<HospitalLogin />} />
+
+                {/* Staff Auth Routes */}
+                <Route path="/staff/login" element={<StaffLogin />} />
 
                 {/* Patient Routes */}
                 <Route path="/hospitals" element={<BookHospitals />} />
@@ -65,6 +74,9 @@ const App: React.FC = () => {
                 {/* Admin Routes */}
                 <Route path="/admin/:hospitalId/login" element={<AdminLogin />} />
                 <Route path="/admin/:hospitalId/dashboard" element={<AdminDashboard />} />
+
+                {/* Staff Routes */}
+                <Route path="/staff/dashboard" element={<StaffDashboard />} />
               </Routes>
             </Suspense>
           </Layout>
