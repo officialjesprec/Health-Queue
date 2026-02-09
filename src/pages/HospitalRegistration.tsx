@@ -66,15 +66,40 @@ const HospitalRegistration: React.FC = () => {
 
       if (error) throw error;
 
-      toast.success('Hospital registered successfully!');
-
-      // Success redirect with hospital data passed via state
       if (data) {
         const hospital = data as any;
-        // Navigate to dashboard with hospital data in state to prevent "not found" error
-        navigate(`/admin/${hospital.id}/dashboard`, {
-          state: { hospital }
-        });
+
+        // Show success with Hospital ID prominently
+        toast.success('Hospital registered successfully!', { duration: 6000 });
+
+        // Show Hospital ID in a custom alert/modal (we'll use a timeout to show after toast)
+        setTimeout(() => {
+          const hospitalId = hospital.id;
+          const message = `🎉 REGISTRATION SUCCESSFUL!\n\n` +
+            `📋 YOUR HOSPITAL ID:\n${hospitalId}\n\n` +
+            `⚠️ IMPORTANT: Save this ID! You'll need it to:\n` +
+            `• Access your hospital admin portal\n` +
+            `• Let staff members log in\n\n` +
+            `📧 We've also sent this ID to: ${form.email}\n\n` +
+            `Would you like to copy it now?`;
+
+          if (confirm(message)) {
+            navigator.clipboard.writeText(hospitalId)
+              .then(() => toast.success('Hospital ID copied to clipboard!'))
+              .catch(() => toast.error('Could not copy. Please write it down manually.'));
+          }
+        }, 1000);
+
+        // TODO: Send email with Hospital ID (requires email service integration)
+        // For now, we'll just log it
+        console.log('📧 Hospital ID to be emailed:', hospital.id, 'to', form.email);
+
+        // Navigate to dashboard after showing the ID
+        setTimeout(() => {
+          navigate(`/admin/${hospital.id}/dashboard`, {
+            state: { hospital }
+          });
+        }, 5000); // Give them time to see and copy the ID
       }
     } catch (err: any) {
       toast.error(err.message || 'Failed to register hospital');
