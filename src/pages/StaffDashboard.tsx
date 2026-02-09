@@ -177,44 +177,46 @@ const StaffDashboard = () => {
                     </div>
                 </header>
 
-                {/* Hospital Access Card */}
-                <div className="bg-gradient-to-r from-teal-900 to-slate-900 p-8 rounded-3xl shadow-xl mb-10 text-white relative overflow-hidden animate-in slide-in-from-top-4 duration-700">
-                    <div className="relative z-10 flex flex-col md:flex-row items-center justify-between gap-6">
-                        <div>
-                            <div className="flex items-center gap-3 mb-2">
-                                <div className="p-2 bg-white/10 rounded-lg backdrop-blur-sm">
-                                    <LayoutDashboard className="w-5 h-5 text-teal-300" />
+                {/* Hospital Access Card - Only visible to Admins or after registration */}
+                {(profile?.role === 'admin' || profile?.role === 'hospital_admin' || location.state?.newHospitalId) && (
+                    <div className="bg-gradient-to-r from-teal-900 to-slate-900 p-8 rounded-3xl shadow-xl mb-10 text-white relative overflow-hidden animate-in slide-in-from-top-4 duration-700">
+                        <div className="relative z-10 flex flex-col md:flex-row items-center justify-between gap-6">
+                            <div>
+                                <div className="flex items-center gap-3 mb-2">
+                                    <div className="p-2 bg-white/10 rounded-lg backdrop-blur-sm">
+                                        <LayoutDashboard className="w-5 h-5 text-teal-300" />
+                                    </div>
+                                    <h2 className="text-2xl font-black">Manage Hospital</h2>
                                 </div>
-                                <h2 className="text-2xl font-black">Manage Hospital</h2>
-                            </div>
-                            <p className="text-teal-200 font-medium max-w-md">
-                                Enter your Hospital ID to access the administration panel, manage queues, and view analytics.
-                            </p>
-                            {location.state?.newHospitalId && (
-                                <p className="mt-2 text-xs font-bold text-teal-400 bg-teal-900/50 inline-block px-3 py-1 rounded-full border border-teal-700">
-                                    ✨ Use the ID generated for your new hospital
+                                <p className="text-teal-200 font-medium max-w-md">
+                                    Enter your Hospital ID to access the administration panel, manage queues, and view analytics.
                                 </p>
-                            )}
+                                {location.state?.newHospitalId && (
+                                    <p className="mt-2 text-xs font-bold text-teal-400 bg-teal-900/50 inline-block px-3 py-1 rounded-full border border-teal-700">
+                                        ✨ Use the ID generated for your new hospital
+                                    </p>
+                                )}
+                            </div>
+                            <div className="flex w-full md:w-auto bg-white/10 p-1.5 rounded-2xl backdrop-blur-sm border border-white/20 focus-within:bg-white/20 focus-within:border-teal-400 transition-all">
+                                <input
+                                    value={accessHospitalId}
+                                    onChange={(e) => setAccessHospitalId(e.target.value)}
+                                    placeholder="Paste Hospital ID..."
+                                    className="bg-transparent text-white placeholder-teal-200/50 px-4 py-2 outline-none w-full md:w-80 font-mono font-bold tracking-wide"
+                                />
+                                <button
+                                    onClick={handleAccessHospital}
+                                    className="bg-white text-teal-900 px-6 py-2 rounded-xl font-black hover:bg-teal-50 transition-colors shadow-lg active:scale-95 flex items-center gap-2 whitespace-nowrap"
+                                >
+                                    Open Dashboard <ArrowRight className="w-4 h-4" />
+                                </button>
+                            </div>
                         </div>
-                        <div className="flex w-full md:w-auto bg-white/10 p-1.5 rounded-2xl backdrop-blur-sm border border-white/20 focus-within:bg-white/20 focus-within:border-teal-400 transition-all">
-                            <input
-                                value={accessHospitalId}
-                                onChange={(e) => setAccessHospitalId(e.target.value)}
-                                placeholder="Paste Hospital ID..."
-                                className="bg-transparent text-white placeholder-teal-200/50 px-4 py-2 outline-none w-full md:w-80 font-mono font-bold tracking-wide"
-                            />
-                            <button
-                                onClick={handleAccessHospital}
-                                className="bg-white text-teal-900 px-6 py-2 rounded-xl font-black hover:bg-teal-50 transition-colors shadow-lg active:scale-95 flex items-center gap-2 whitespace-nowrap"
-                            >
-                                Open Dashboard <ArrowRight className="w-4 h-4" />
-                            </button>
-                        </div>
+                        {/* Decorative Elements */}
+                        <div className="absolute top-0 right-0 p-40 bg-teal-500 rounded-full blur-3xl opacity-10 -translate-y-1/2 translate-x-1/4"></div>
+                        <div className="absolute bottom-0 left-0 p-32 bg-blue-600 rounded-full blur-3xl opacity-10 translate-y-1/2 -translate-x-1/4"></div>
                     </div>
-                    {/* Decorative Elements */}
-                    <div className="absolute top-0 right-0 p-40 bg-teal-500 rounded-full blur-3xl opacity-10 -translate-y-1/2 translate-x-1/4"></div>
-                    <div className="absolute bottom-0 left-0 p-32 bg-blue-600 rounded-full blur-3xl opacity-10 translate-y-1/2 -translate-x-1/4"></div>
-                </div>
+                )}
 
                 {/* Stats Row */}
                 <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
