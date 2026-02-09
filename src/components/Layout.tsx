@@ -78,7 +78,7 @@ const Layout: React.FC<{ children: React.ReactNode }> = ({ children }) => {
                       <button onClick={authSignOut} className="btn-ghost btn-sm text-red-500 hover:bg-red-50 hover:text-red-600">
                         Sign Out
                       </button>
-                      <Link to="/" className="btn-primary btn-sm">
+                      <Link to="/hospitals" className="btn-primary btn-sm">
                         Book Now
                       </Link>
                     </>
