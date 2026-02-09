@@ -54,8 +54,8 @@ const PatientDashboard: React.FC = () => {
         .eq('id', user?.id)
         .maybeSingle(); // Use maybeSingle to avoid 406 error if multiple rows (shouldn't happen with unique ID) or no rows
 
-      if (data && data.patient_code) {
-        setPatientId(data.patient_code);
+      if (data && (data as any).patient_code) {
+        setPatientId((data as any).patient_code);
       } else {
         // Fallback/Simulation for demo if DB migration hasn't run for this user yet
         // Or if user just signed up and trigger hasn't fired/completed
@@ -65,6 +65,17 @@ const PatientDashboard: React.FC = () => {
     } catch (err) {
       console.error('Error fetching patient profile:', err);
       setPatientId('HQ-' + Math.floor(10000 + Math.random() * 90000));
+    }
+  };
+
+  const handleSignOut = async () => {
+    try {
+      await signOut();
+      toast.success('Signed out successfully');
+      navigate('/auth/login');
+    } catch (error) {
+      console.error('Sign out error:', error);
+      toast.error('Failed to sign out');
     }
   };
 
@@ -107,7 +118,7 @@ const PatientDashboard: React.FC = () => {
           <Link to="/hospitals" className="flex-1 md:flex-none text-center bg-teal-600 text-white px-6 py-3 rounded-xl font-bold text-sm hover:bg-teal-700 transition-colors shadow-lg shadow-teal-200 hover:shadow-xl active:scale-95 transform duration-200">
             Book Appointment
           </Link>
-          <button onClick={signOut} className="bg-slate-50 text-slate-600 px-6 py-3 rounded-xl font-bold text-sm hover:bg-slate-100 transition-colors border border-slate-200">
+          <button onClick={handleSignOut} className="bg-slate-50 text-slate-600 px-6 py-3 rounded-xl font-bold text-sm hover:bg-slate-100 transition-colors border border-slate-200">
             Sign Out
           </button>
         </div>
@@ -292,8 +303,8 @@ const PatientDashboard: React.FC = () => {
                     <div className="flex flex-col md:flex-row justify-between md:items-center gap-5">
                       <div className="flex items-center gap-5">
                         <div className={`w-14 h-14 rounded-2xl flex flex-col items-center justify-center font-black transition-colors border ${item.status === QueueStatus.COMPLETED
-                            ? 'bg-slate-50 text-slate-400 border-slate-100'
-                            : 'bg-teal-50 text-teal-700 border-teal-100'
+                          ? 'bg-slate-50 text-slate-400 border-slate-100'
+                          : 'bg-teal-50 text-teal-700 border-teal-100'
                           }`}>
                           <span className="text-[10px] uppercase opacity-60">Tick</span>
                           <span className="text-lg leading-none">{item.ticketId.split('-')[1]}</span>
@@ -321,8 +332,8 @@ const PatientDashboard: React.FC = () => {
                         <Link
                           to={`/status/${item.id}`}
                           className={`px-4 py-2 rounded-lg text-xs font-bold transition-colors flex items-center gap-2 ${item.status === QueueStatus.COMPLETED
-                              ? 'bg-slate-100 text-slate-500 hover:bg-slate-200'
-                              : 'bg-teal-600 text-white hover:bg-teal-700 shadow-md shadow-teal-100'
+                            ? 'bg-slate-100 text-slate-500 hover:bg-slate-200'
+                            : 'bg-teal-600 text-white hover:bg-teal-700 shadow-md shadow-teal-100'
                             }`}
                         >
                           {item.status === QueueStatus.COMPLETED ? 'View Receipt' : 'Track Status'}
