@@ -18,6 +18,7 @@ const PageLoader = () => (
 const Landing = React.lazy(() => import('./pages/Landing'));
 const PatientHome = React.lazy(() => import('./pages/PatientHome'));
 const BookingFlow = React.lazy(() => import('./pages/BookingFlow'));
+const BookHospitals = React.lazy(() => import('./pages/BookHospitals'));
 const QueueStatus = React.lazy(() => import('./pages/QueueStatus'));
 const AdminDashboard = React.lazy(() => import('./pages/AdminDashboard'));
 const PatientDashboard = React.lazy(() => import('./pages/PatientDashboard'));
@@ -52,6 +53,7 @@ const App: React.FC = () => {
                 <Route path="/hospital/login" element={<HospitalLogin />} />
 
                 {/* Patient Routes */}
+                <Route path="/hospitals" element={<BookHospitals />} />
                 <Route path="/book/:hospitalId" element={<BookingFlow />} />
                 <Route path="/status/:ticketId" element={<QueueStatus />} />
                 <Route path="/dashboard" element={<PatientDashboard />} />

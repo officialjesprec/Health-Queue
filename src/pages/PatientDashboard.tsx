@@ -6,17 +6,34 @@ import { Link, useNavigate } from 'react-router-dom';
 
 const PatientDashboard: React.FC = () => {
   const { queue, user, hospitals } = useQueue();
-  const { signOut, isAuthenticated } = useAuth();
+  const { signOut, isAuthenticated, loading: authLoading } = useAuth();
   const navigate = useNavigate();
   const myQueue = queue.filter(q => q.phone === user?.phone);
 
   useEffect(() => {
-    if (!isAuthenticated) {
-      navigate('/auth/login?redirect=/dashboard');
+    // Wait for auth to finish loading before checking authentication
+    if (!authLoading && !isAuthenticated) {
+      // Add slight delay to handle race conditions
+      const timer = setTimeout(() => {
+        if (!isAuthenticated) {
+          navigate('/auth/login?redirect=/dashboard');
+        }
+      }, 500);
+      return () => clearTimeout(timer);
     }
-  }, [isAuthenticated, navigate]);
+  }, [isAuthenticated, authLoading, navigate]);
 
   const getHospitalName = (id: string) => hospitals.find(h => h.id === id)?.name || 'Hospital';
+
+  // Show loading state while auth is initializing
+  if (authLoading) {
+    return (
+      <div className="max-w-4xl mx-auto py-20 text-center">
+        <div className="w-16 h-16 border-4 border-primary-200 border-t-primary-600 rounded-full animate-spin mx-auto mb-6"></div>
+        <p className="text-xl font-medium text-slate-600">Loading your dashboard...</p>
+      </div>
+    );
+  }
 
   if (!isAuthenticated) return null;
 

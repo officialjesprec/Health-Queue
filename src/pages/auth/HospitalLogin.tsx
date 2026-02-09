@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { useNavigate, Link, useLocation } from 'react-router-dom';
 import { useAuth } from '../../hooks/useAuth';
+import { supabase } from '../../lib/supabase';
 import { Mail, Lock, AlertCircle, Loader2, ArrowLeft, Eye, EyeOff, Stethoscope } from 'lucide-react';
 import toast from 'react-hot-toast';
 
@@ -28,12 +29,32 @@ const HospitalLogin: React.FC = () => {
         setLoading(true);
 
         try {
-            await signIn(form.email, form.password);
-            toast.success('Welcome back, Admin!');
+            // Step 1: Authenticate the user
+            const { data: authData } = await signIn(form.email, form.password);
+
+            // Step 2: Verify user is in staff table (CRITICAL SECURITY CHECK)
+            const { data: staffData, error: staffError } = await supabase
+                .from('staff')
+                .select('id, role, hospital_id, full_name')
+                .eq('id', authData.user?.id)
+                .single();
+
+            // If user is NOT in staff table, they're a patient trying to access admin portal
+            if (staffError || !staffData) {
+                // Sign them out immediately
+                await supabase.auth.signOut();
+                setError('Access Denied: This login is for hospital staff only. Please use the patient login instead.');
+                toast.error('Not authorized for hospital portal');
+                setLoading(false);
+                return;
+            }
+
+            // User is verified staff - allow access
+            toast.success(`Welcome back, ${(staffData as any).full_name || 'Admin'}!`);
             navigate(redirectPath);
         } catch (err: any) {
             console.error('Hospital Login Error:', err);
-            setError('Invalid credentials. Please checking your email and password.');
+            setError('Invalid credentials. Please check your email and password.');
             toast.error('Login failed');
         } finally {
             setLoading(false);

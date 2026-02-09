@@ -29,6 +29,11 @@ const PatientLogin: React.FC = () => {
         try {
             await signIn(form.email, form.password);
             toast.success('Welcome back!');
+
+            // Small delay to ensure auth state is fully updated before navigation
+            // This prevents the race condition where PatientDashboard redirects back to login
+            await new Promise(resolve => setTimeout(resolve, 300));
+
             navigate(redirectPath);
         } catch (err: any) {
             console.error('Login error:', err);

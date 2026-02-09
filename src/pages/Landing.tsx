@@ -25,7 +25,7 @@ const Landing: React.FC = () => {
                             ) : (
                                 <>
                                     <Link to="/dashboard" className="btn-ghost">Dashboard</Link>
-                                    <Link to="/" className="btn-primary">Book Now</Link>
+                                    <Link to="/hospitals" className="btn-primary">Book Now</Link>
                                 </>
                             )}
                             <Link to="/register-hospital" className="text-sm font-bold text-slate-500 hover:text-teal-600 ml-2">For Hospitals</Link>
@@ -49,7 +49,7 @@ const Landing: React.FC = () => {
                                 Book appointments instantly, track your queue position in real-time, and receive notifications when it's your turn. Healthcare made simple.
                             </p>
                             <div className="flex gap-4 pt-4">
-                                <Link to={isAuthenticated ? "/" : "/auth/signup"} className="btn-primary btn-lg group">
+                                <Link to={isAuthenticated ? "/hospitals" : "/auth/signup"} className="btn-primary btn-lg group">
                                     {isAuthenticated ? "Book Appointment" : "Get Started Free"}
                                     <ArrowRight className="w-5 h-5 ml-2 group-hover:translate-x-1 transition-transform" />
                                 </Link>
@@ -123,7 +123,7 @@ const Landing: React.FC = () => {
                     <p className="text-xl text-primary-100 mb-8 max-w-2xl mx-auto">
                         Join thousands of Nigerians who are taking control of their healthcare experience
                     </p>
-                    <Link to={isAuthenticated ? "/" : "/auth/signup"} className="btn-success btn-lg">
+                    <Link to={isAuthenticated ? "/hospitals" : "/auth/signup"} className="btn-success btn-lg">
                         {isAuthenticated ? "Book Your First Appointment" : "Create Free Account"}
                     </Link>
                 </div>

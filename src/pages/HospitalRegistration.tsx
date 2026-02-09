@@ -67,10 +67,14 @@ const HospitalRegistration: React.FC = () => {
       if (error) throw error;
 
       toast.success('Hospital registered successfully!');
-      // Success redirect directly to the new hospital's dashboard
+
+      // Success redirect with hospital data passed via state
       if (data) {
         const hospital = data as any;
-        navigate(`/admin/${hospital.id}/dashboard`);
+        // Navigate to dashboard with hospital data in state to prevent "not found" error
+        navigate(`/admin/${hospital.id}/dashboard`, {
+          state: { hospital }
+        });
       }
     } catch (err: any) {
       toast.error(err.message || 'Failed to register hospital');

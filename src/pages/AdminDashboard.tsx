@@ -1,6 +1,6 @@
 
 import React, { useState, useEffect } from 'react';
-import { useParams, useNavigate } from 'react-router-dom';
+import { useParams, useNavigate, useLocation } from 'react-router-dom';
 import { useQueue } from '../store/QueueContext';
 import { useAuth } from '../hooks/useAuth';
 import { QueueStatus, JourneyStage, QueueItem, Hospital } from '../types';
@@ -11,6 +11,7 @@ import InfoTooltip from '../components/InfoTooltip';
 const AdminDashboard: React.FC = () => {
   const { hospitalId } = useParams();
   const navigate = useNavigate();
+  const location = useLocation();
   const { user, signOut, isAuthenticated } = useAuth(); // Auth Hook
   const { queue, updateQueueItem, advanceQueue, addQueueItem, acceptBooking, hospitals } = useQueue();
 
@@ -30,7 +31,24 @@ const AdminDashboard: React.FC = () => {
         return;
       }
 
-      // First try local context
+      // First, check if hospital data was passed via navigation state (from registration)
+      const stateHospital = (location.state as any)?.hospital;
+      if (stateHospital) {
+        const mappedHospital: Hospital = {
+          id: stateHospital.id,
+          name: stateHospital.name,
+          location: stateHospital.location,
+          departments: stateHospital.departments || ['OPD'],
+          services: stateHospital.services || {},
+          registrationFee: stateHospital.registration_fee || 0,
+          isOpen: stateHospital.is_open !== false,
+        };
+        setHospital(mappedHospital);
+        setHospitalLoading(false);
+        return;
+      }
+
+      // Second, try local context
       const localHospital = hospitals.find(h => h.id === hospitalId) || HOSPITALS.find(h => h.id === hospitalId);
 
       if (localHospital) {
@@ -55,8 +73,8 @@ const AdminDashboard: React.FC = () => {
             id: data.id,
             name: data.name,
             location: data.location,
-            departments: data.departments || ['OPD'],
-            services: data.services || {},
+            departments: (data.departments as any) || ['OPD'],
+            services: (data.services as any) || {},
             registrationFee: data.registration_fee || 0,
             isOpen: data.is_open !== false,
           };
@@ -70,7 +88,7 @@ const AdminDashboard: React.FC = () => {
     };
 
     fetchHospital();
-  }, [hospitalId, hospitals]);
+  }, [hospitalId, hospitals, location.state]);
 
   // Protect Route
   useEffect(() => {
