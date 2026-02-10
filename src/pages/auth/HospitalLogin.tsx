@@ -51,46 +51,34 @@ const HospitalLogin: React.FC = () => {
                 // Check if they are a legacy admin via metadata (fallback)
                 const userRole = authData.user?.user_metadata?.role;
                 if (userRole === 'hospital_admin' || userRole === 'admin') {
-                    // If they have the role but not in table, we might need to sync or allow if strictly 'admin' role.
-                    // But user said "strictly present inside the admin table". 
-                    // However, to avoid locking out existing admins who might not be in the new table yet (if migration didn't backfill),
-                    // we should be careful. Migration 013 didn't seem to backfill.
-                    // But let's respect the "strictly admin table" instruction if possible, 
-                    // or maybe insert them if missing?
-                    // I will trust the user's intent: "strictly... inside the admin table".
-                    // If I fail here, they will complain.
-                    // But if the migration didn't backfill, existing users are locked out.
-                    // I will assuming the 'admins' table is the source of truth now.
-                    // BUT, if the user just ran the migration, the table is empty for old users?
-                    // Migration 013 was likely run before? 
-                    // I'll assume standard flow.
-
-                    // Actually, I'll add a small safety check: if metadata says admin but table missing, maybe insert?
-                    // No, "Strictly inside the admin table".
+                    // Strictly inside the admin table as requested by the user flow
                     await supabase.auth.signOut();
-                    throw new Error('Access Denied: You are not authorized as an Administrator.');
+                    throw new Error('Access Denied: Your account is not in the Administrator database.');
                 }
 
                 await supabase.auth.signOut();
                 throw new Error('Access Denied: This portal is strictly for Administrators.');
             }
 
+            // At this point, TypeScript knows adminData is not null and has the correct type
             toast.success(`Welcome back, ${adminData.full_name || 'Admin'}!`);
 
             // Smart Redirect: Send to Admin Dashboard
-            if (searchParams.get('redirect')) {
-                navigate(searchParams.get('redirect')!);
+            const redirect = searchParams.get('redirect');
+            if (redirect) {
+                navigate(redirect);
             } else {
                 navigate('/admin/dashboard');
             }
-        } catch (err: any) {
-            console.error('Admin Login Error:', err);
+        } catch (err: unknown) {
+            const error = err as Error;
+            console.error('Admin Login Error:', error);
 
             let message = 'Login failed. Please try again.';
-            if (err.message === 'Invalid login credentials') {
+            if (error.message === 'Invalid login credentials') {
                 message = 'Invalid Email or Password.';
             } else {
-                message = err.message || message;
+                message = error.message || message;
             }
 
             setError(message);

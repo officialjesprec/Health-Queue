@@ -9,13 +9,14 @@ import toast from 'react-hot-toast';
 const AdminLogin: React.FC = () => {
   const { hospitalId } = useParams();
   const navigate = useNavigate();
+  // TODO: Implement stronger validation for hospitalId
   const { hospitals } = useQueue();
   const { signIn } = useAuth();
 
   // Try to find hospital locally, or allow if we have a valid ID form (will be verified on submit)
   // For better UX, we should fetch it if missing but let's rely on simple check first
-  const hospital = hospitals.find(h => h.id === hospitalId || (h as any).hospitalCode === hospitalId);
-  const [hospitalName, setHospitalName] = React.useState((hospital as any)?.name || '');
+  const hospital = hospitals.find(h => h.id === hospitalId || h.hospitalCode === hospitalId);
+  const [hospitalName, setHospitalName] = React.useState(hospital?.name || '');
 
   React.useEffect(() => {
     if (!hospital && hospitalId) {
@@ -76,7 +77,7 @@ const AdminLogin: React.FC = () => {
               .eq('hospital_code', hospitalId)
               .maybeSingle();
 
-            if (hospitalByCode) targetHospitalId = (hospitalByCode as any).id;
+            if (hospitalByCode) targetHospitalId = hospitalByCode.id;
 
             // 2. Check if user is staff for this hospital
             const { data: staff, error: staffError } = await supabase
@@ -92,7 +93,7 @@ const AdminLogin: React.FC = () => {
             }
 
             // STRICT ADMIN CHECK
-            if ((staff as any).role !== 'admin' && (staff as any).role !== 'hospital_admin') {
+            if (staff.role !== 'admin' && staff.role !== 'hospital_admin') {
               await supabase.auth.signOut();
               throw new Error('Access Restricted: Administrators Only. Please use Staff Login.');
             }

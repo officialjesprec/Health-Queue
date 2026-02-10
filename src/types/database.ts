@@ -1,16 +1,40 @@
 // Database types generated from Supabase schema
 
-export type Json =
-    | string
-    | number
-    | boolean
-    | null
-    | { [key: string]: Json | undefined }
-    | Json[]
+export type Json = any;
 
 export interface Database {
     public: {
         Tables: {
+            admins: {
+                Row: {
+                    id: string
+                    hospital_id: string | null
+                    full_name: string
+                    email: string
+                    phone: string | null
+                    created_at: string
+                    updated_at: string
+                },
+                Insert: {
+                    id: string
+                    hospital_id?: string | null
+                    full_name: string
+                    email: string
+                    phone?: string | null
+                    created_at?: string
+                    updated_at?: string
+                },
+                Update: {
+                    id?: string
+                    hospital_id?: string | null
+                    full_name?: string
+                    email?: string
+                    phone?: string | null
+                    created_at?: string
+                    updated_at?: string
+                },
+                Relationships: []
+            },
             hospitals: {
                 Row: {
                     id: string
@@ -28,7 +52,8 @@ export interface Database {
                     operating_hours: Json | null
                     created_at: string
                     updated_at: string
-                }
+                    hospital_code: string | null
+                },
                 Insert: {
                     id?: string
                     name: string
@@ -45,7 +70,8 @@ export interface Database {
                     operating_hours?: Json | null
                     created_at?: string
                     updated_at?: string
-                }
+                    hospital_code?: string | null
+                },
                 Update: {
                     id?: string
                     name?: string
@@ -62,8 +88,10 @@ export interface Database {
                     operating_hours?: Json | null
                     created_at?: string
                     updated_at?: string
-                }
-            }
+                    hospital_code?: string | null
+                },
+                Relationships: []
+            },
             users: {
                 Row: {
                     id: string
@@ -76,7 +104,7 @@ export interface Database {
                     next_of_kin: Json | null
                     created_at: string
                     updated_at: string
-                }
+                },
                 Insert: {
                     id: string
                     full_name: string
@@ -88,7 +116,7 @@ export interface Database {
                     next_of_kin?: Json | null
                     created_at?: string
                     updated_at?: string
-                }
+                },
                 Update: {
                     id?: string
                     full_name?: string
@@ -100,8 +128,9 @@ export interface Database {
                     next_of_kin?: Json | null
                     created_at?: string
                     updated_at?: string
-                }
-            }
+                },
+                Relationships: []
+            },
             hospital_profiles: {
                 Row: {
                     id: string
@@ -112,7 +141,7 @@ export interface Database {
                     is_paid: boolean
                     payment_id: string | null
                     created_at: string
-                }
+                },
                 Insert: {
                     id?: string
                     user_id: string
@@ -122,7 +151,7 @@ export interface Database {
                     is_paid?: boolean
                     payment_id?: string | null
                     created_at?: string
-                }
+                },
                 Update: {
                     id?: string
                     user_id?: string
@@ -132,8 +161,9 @@ export interface Database {
                     is_paid?: boolean
                     payment_id?: string | null
                     created_at?: string
-                }
-            }
+                },
+                Relationships: []
+            },
             queue_items: {
                 Row: {
                     id: string
@@ -154,7 +184,7 @@ export interface Database {
                     assigned_staff_id: string | null
                     created_at: string
                     updated_at: string
-                }
+                },
                 Insert: {
                     id?: string
                     patient_id: string
@@ -174,7 +204,7 @@ export interface Database {
                     assigned_staff_id?: string | null
                     created_at?: string
                     updated_at?: string
-                }
+                },
                 Update: {
                     id?: string
                     patient_id?: string
@@ -194,8 +224,9 @@ export interface Database {
                     assigned_staff_id?: string | null
                     created_at?: string
                     updated_at?: string
-                }
-            }
+                },
+                Relationships: []
+            },
             notifications: {
                 Row: {
                     id: string
@@ -207,7 +238,7 @@ export interface Database {
                     is_read: boolean
                     sent_via: string[]
                     created_at: string
-                }
+                },
                 Insert: {
                     id?: string
                     user_id: string
@@ -218,7 +249,7 @@ export interface Database {
                     is_read?: boolean
                     sent_via?: string[]
                     created_at?: string
-                }
+                },
                 Update: {
                     id?: string
                     user_id?: string
@@ -229,8 +260,9 @@ export interface Database {
                     is_read?: boolean
                     sent_via?: string[]
                     created_at?: string
-                }
-            }
+                },
+                Relationships: []
+            },
             staff: {
                 Row: {
                     id: string
@@ -241,7 +273,8 @@ export interface Database {
                     department: string | null
                     is_active: boolean
                     created_at: string
-                }
+                    staff_code: string | null
+                },
                 Insert: {
                     id: string
                     hospital_id: string
@@ -251,7 +284,8 @@ export interface Database {
                     department?: string | null
                     is_active?: boolean
                     created_at?: string
-                }
+                    staff_code?: string | null
+                },
                 Update: {
                     id?: string
                     hospital_id?: string
@@ -261,8 +295,10 @@ export interface Database {
                     department?: string | null
                     is_active?: boolean
                     created_at?: string
-                }
-            }
+                    staff_code?: string | null
+                },
+                Relationships: []
+            },
             payments: {
                 Row: {
                     id: string
@@ -275,7 +311,7 @@ export interface Database {
                     status: string
                     metadata: Json | null
                     created_at: string
-                }
+                },
                 Insert: {
                     id?: string
                     user_id: string
@@ -287,7 +323,7 @@ export interface Database {
                     status?: string
                     metadata?: Json | null
                     created_at?: string
-                }
+                },
                 Update: {
                     id?: string
                     user_id?: string
@@ -299,8 +335,9 @@ export interface Database {
                     status?: string
                     metadata?: Json | null
                     created_at?: string
-                }
-            }
+                },
+                Relationships: []
+            },
             feedback: {
                 Row: {
                     id: string
@@ -312,7 +349,7 @@ export interface Database {
                     category: string | null
                     is_public: boolean
                     created_at: string
-                }
+                },
                 Insert: {
                     id?: string
                     user_id: string
@@ -323,7 +360,7 @@ export interface Database {
                     category?: string | null
                     is_public?: boolean
                     created_at?: string
-                }
+                },
                 Update: {
                     id?: string
                     user_id?: string
@@ -334,8 +371,9 @@ export interface Database {
                     category?: string | null
                     is_public?: boolean
                     created_at?: string
-                }
-            }
+                },
+                Relationships: []
+            },
             analytics_events: {
                 Row: {
                     id: string
@@ -346,7 +384,7 @@ export interface Database {
                     duration: number | null
                     metadata: Json | null
                     created_at: string
-                }
+                },
                 Insert: {
                     id?: string
                     hospital_id: string
@@ -356,7 +394,7 @@ export interface Database {
                     duration?: number | null
                     metadata?: Json | null
                     created_at?: string
-                }
+                },
                 Update: {
                     id?: string
                     hospital_id?: string
@@ -366,12 +404,13 @@ export interface Database {
                     duration?: number | null
                     metadata?: Json | null
                     created_at?: string
-                }
+                },
+                Relationships: []
             }
-        }
+        },
         Views: {
             [_ in never]: never
-        }
+        },
         Functions: {
             generate_ticket_id: {
                 Args: {
@@ -404,7 +443,7 @@ export interface Database {
                 }
                 Returns: string
             }
-        }
+        },
         Enums: {
             [_ in never]: never
         }

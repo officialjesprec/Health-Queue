@@ -61,7 +61,7 @@
   --bg-main: #0a0f18;
   --bg-surface: #111827;
   --bg-card: #1f2937;
-  --text-main: #f8fafc;
+  --text-main: #0f172a;
   --text-muted: #94a3b8;
   --border-main: #334155;
   --accent-main: #22d3ee;
@@ -72,7 +72,7 @@
   --bg-main: #0f172a;
   --bg-surface: #1e293b;
   --bg-card: #334155;
-  --text-main: #f1f5f9;
+  --text-main: #0f172a;
   --text-muted: #94a3b8;
   --border-main: #475569;
   --accent-main: #06b6d4;
@@ -95,12 +95,17 @@ body {
   color: var(--text-main);
   min-height: 100vh;
   line-height: 1.6;
-  transition: background-color 0.3s cubic-bezier(0.4, 0, 0.2, 1), 
-              color 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  transition: background-color 0.3s cubic-bezier(0.4, 0, 0.2, 1),
+    color 0.3s cubic-bezier(0.4, 0, 0.2, 1);
 }
 
 /* Typography Scale */
-h1, h2, h3, h4, h5, h6 {
+h1,
+h2,
+h3,
+h4,
+h5,
+h6 {
   font-family: var(--font-heading);
   font-weight: 700;
   line-height: 1.2;
@@ -241,7 +246,8 @@ h6 {
   background-color: var(--bg-card);
   border-radius: var(--radius-medical);
   box-shadow: 0 4px 6px -1px rgb(0 0 0 / 0.05), 0 2px 4px -2px rgb(0 0 0 / 0.05);
-  padding: 2.5rem; /* Increased padding for professional HMS look */
+  padding: 2.5rem;
+  /* Increased padding for professional HMS look */
   border: 1px solid var(--border-main);
   transition: all 0.3s ease;
 }
@@ -294,6 +300,18 @@ h6 {
   max-width: 1280px;
   margin: 0 auto;
   padding: 0 1.5rem;
+}
+
+.container-dashboard {
+  max-width: 1600px;
+  margin: 0 auto;
+  padding: 2rem 1.5rem;
+}
+
+@media (min-width: 768px) {
+  .container-dashboard {
+    padding: 3rem 3rem;
+  }
 }
 
 .text-gradient {
@@ -399,19 +417,22 @@ h6 {
 /* Mobile Form Improvements */
 @media (max-width: 640px) {
   .input {
-    font-size: 16px; /* Prevents zoom on iOS */
-    min-height: 52px; /* Larger touch target */
+    font-size: 16px;
+    /* Prevents zoom on iOS */
+    min-height: 52px;
+    /* Larger touch target */
   }
-  
+
   .btn {
-    min-height: 52px; /* Larger touch target on mobile */
+    min-height: 52px;
+    /* Larger touch target on mobile */
     font-size: 1.0625rem;
   }
-  
+
   .card {
     padding: 1.5rem;
   }
-  
+
   .container-custom {
     padding: 0 1rem;
   }
@@ -446,6 +467,7 @@ h6 {
   0% {
     background-position: 200% 0;
   }
+
   100% {
     background-position: -200% 0;
   }
@@ -463,7 +485,7 @@ h6 {
   .btn:active {
     transform: scale(0.95);
   }
-  
+
   .card-hover:active {
     transform: translateY(-2px);
   }
@@ -478,6 +500,7 @@ h6 {
 
 /* Accessibility - Reduce motion */
 @media (prefers-reduced-motion: reduce) {
+
   *,
   *::before,
   *::after {

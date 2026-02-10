@@ -130,7 +130,7 @@ export const QueueProvider: React.FC<{ children: ReactNode }> = ({ children }) =
         const { data, error } = await supabase
           .from('queue_items')
           .select('*')
-          .eq('date', today);
+          .eq('appointment_date', today);
 
         if (data) {
           // Map DB items to local shape if needed (snake_case -> camelCase)

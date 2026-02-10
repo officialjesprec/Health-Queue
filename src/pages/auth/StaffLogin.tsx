@@ -24,38 +24,30 @@ const StaffLogin: React.FC = () => {
         setLoading(true);
 
         try {
-            // 1. Verify Staff ID format (optional regex check)
-            if (!/^[A-Z]{3}-\d{5}$/.test(form.staffId.toUpperCase())) {
-                // Allow loose format for now, but ideally enforce strict
+            // 1. Fetch Staff Email using Staff ID
+            const { data: staffLookup, error: lookupError } = await supabase
+                .from('staff')
+                .select('email, full_name, id, staff_code')
+                .eq('staff_code', form.staffId.toUpperCase())
+                .maybeSingle();
+
+            if (lookupError || !staffLookup) {
+                throw new Error('Invalid Staff ID. Please contact your Administrator.');
             }
 
-            // 2. Authenticate User
-            const { data: authData, error: authError } = await signIn(form.email, form.password);
+            // 2. Authenticate User using the retrieved email
+            const { data: authData, error: authError } = await signIn((staffLookup as any).email, form.password);
 
-            if (authError) throw authError;
+            if (authError) {
+                if (authError.message === 'Invalid login credentials') {
+                    throw new Error('Invalid Password for this Staff ID.');
+                }
+                throw authError;
+            }
+
             if (!authData.user) throw new Error('Authentication failed');
 
-            // 3. Verify Staff ID matches the user record
-            const { data, error: staffError } = await supabase
-                .from('staff')
-                .select('*')
-                .eq('id', authData.user.id)
-                .single();
-
-            const staffData = data as any; // Explicit cast to handle dynamic schema behavior
-
-            if (staffError || !staffData) {
-                await supabase.auth.signOut();
-                throw new Error('No staff account found for this user.');
-            }
-
-            // check if entered staff ID matches (optional security step)
-            if (staffData.staff_code && staffData.staff_code !== form.staffId) {
-                await supabase.auth.signOut();
-                throw new Error('Invalid Staff ID for this account.');
-            }
-
-            toast.success(`Welcome back, ${staffData.full_name}!`);
+            toast.success(`Welcome back, ${(staffLookup as any).full_name}!`);
             navigate('/staff/dashboard');
 
         } catch (err: any) {
@@ -102,21 +94,6 @@ const StaffLogin: React.FC = () => {
                                         placeholder="SSS-12345"
                                         value={form.staffId}
                                         onChange={(e) => setForm({ ...form, staffId: e.target.value.toUpperCase() })}
-                                    />
-                                </div>
-                            </div>
-
-                            <div>
-                                <label className="text-xs font-bold uppercase text-slate-500 tracking-wider ml-1 mb-1 block">Work Email</label>
-                                <div className="relative group">
-                                    <Mail className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-slate-400 group-focus-within:text-teal-500 transition-colors" />
-                                    <input
-                                        type="email"
-                                        required
-                                        className="w-full p-4 pl-12 bg-slate-50 border-2 border-slate-100 rounded-xl outline-none focus:border-teal-500 focus:bg-white transition-all font-medium text-slate-900"
-                                        placeholder="nurse@hospital.com"
-                                        value={form.email}
-                                        onChange={(e) => setForm({ ...form, email: e.target.value })}
                                     />
                                 </div>
                             </div>

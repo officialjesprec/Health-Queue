@@ -374,7 +374,7 @@ const AdminDashboard: React.FC = () => {
   };
 
   return (
-    <div className="space-y-8 px-4 md:px-12 py-8 max-w-[1600px] mx-auto">
+    <div className="container-dashboard space-y-10">
       <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-6">
         <div>
           <h1 className="text-4xl font-black text-emerald-950 dark:text-emerald-50 mb-2 leading-tight">

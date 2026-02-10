@@ -86,7 +86,7 @@ const StaffDashboard = () => {
                 .from('queue_items')
                 .select('*')
                 .eq('hospital_id', staffData.hospital_id)
-                .eq('date', today); // Only today's patients
+                .eq('appointment_date', today); // Only today's patients
 
             if (qData) {
                 // Map DB items to local shape
@@ -214,7 +214,7 @@ const StaffDashboard = () => {
             </aside>
 
             {/* Main Content */}
-            <main className="flex-1 md:ml-72 p-10 space-y-10">
+            <main className="flex-1 md:ml-72 p-6 md:p-12 space-y-10">
                 <header className="flex flex-col md:flex-row justify-between items-start md:items-center gap-6">
                     <div>
                         <h1 className="text-4xl font-black tracking-tight mb-2">Welcome, {profile?.full_name}</h1>

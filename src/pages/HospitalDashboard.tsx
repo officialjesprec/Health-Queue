@@ -35,7 +35,7 @@ const HospitalDashboard: React.FC = () => {
     ];
 
     return (
-        <div className="max-w-[1600px] mx-auto p-4 md:p-8 space-y-8 animate-in fade-in duration-500">
+        <div className="container-dashboard space-y-10 animate-in fade-in duration-500">
             {/* Header */}
             <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-6">
                 <div>
