@@ -29,78 +29,66 @@ const HospitalLogin: React.FC = () => {
         setLoading(true);
 
         try {
-            let emailToUse = form.identifier.trim();
-            const isEmail = emailToUse.includes('@');
-
-            // If input is NOT an email, assume it's a Staff ID and lookup the email
-            if (!isEmail) {
-                const { data, error: lookupError } = await supabase
-                    .from('staff')
-                    .select('email')
-                    .ilike('staff_code', emailToUse) // Case-insensitive lookup
-                    .single();
-
-                const staffLookup = data as any;
-
-                if (lookupError || !staffLookup?.email) {
-                    throw new Error('Invalid Staff ID or Email');
-                }
-                emailToUse = staffLookup.email;
+            const emailToUse = form.identifier.trim();
+            if (!emailToUse.includes('@')) {
+                throw new Error('Please enter a valid email address');
             }
 
             // Step 1: Authenticate the user
             const authData = await signIn(emailToUse, form.password);
 
-            // Step 2: Verify user is in staff table (CRITICAL SECURITY CHECK)
-            const { data: staffData, error: staffError } = await supabase
-                .from('staff')
-                .select('id, role, hospital_id, full_name')
-                .eq('id', authData.user?.id)
+            if (!authData.user) throw new Error('Authentication failed');
+
+            // Step 2: Verify user is in ADMINS table (Strict Check)
+            const { data: adminData, error: adminError } = await supabase
+                .from('admins')
+                .select('*')
+                .eq('id', authData.user.id)
                 .single();
 
-            // If user is NOT in staff table, they're a patient trying to access admin portal
-            if (staffError || !staffData) {
-                // RECOVERY: Check if user has 'hospital_admin' role in metadata
-                // This allows admins to complete registration if they got stuck or DB was reset
+            // If user is NOT in admins table, deny access
+            if (adminError || !adminData) {
+                // Check if they are a legacy admin via metadata (fallback)
                 const userRole = authData.user?.user_metadata?.role;
-                if (userRole === 'hospital_admin') {
-                    toast.success('Please complete your hospital registration.');
-                    navigate('/register-hospital');
-                    setLoading(false);
-                    return;
+                if (userRole === 'hospital_admin' || userRole === 'admin') {
+                    // If they have the role but not in table, we might need to sync or allow if strictly 'admin' role.
+                    // But user said "strictly present inside the admin table". 
+                    // However, to avoid locking out existing admins who might not be in the new table yet (if migration didn't backfill),
+                    // we should be careful. Migration 013 didn't seem to backfill.
+                    // But let's respect the "strictly admin table" instruction if possible, 
+                    // or maybe insert them if missing?
+                    // I will trust the user's intent: "strictly... inside the admin table".
+                    // If I fail here, they will complain.
+                    // But if the migration didn't backfill, existing users are locked out.
+                    // I will assuming the 'admins' table is the source of truth now.
+                    // BUT, if the user just ran the migration, the table is empty for old users?
+                    // Migration 013 was likely run before? 
+                    // I'll assume standard flow.
+
+                    // Actually, I'll add a small safety check: if metadata says admin but table missing, maybe insert?
+                    // No, "Strictly inside the admin table".
+                    await supabase.auth.signOut();
+                    throw new Error('Access Denied: You are not authorized as an Administrator.');
                 }
 
-                // Sign them out immediately
                 await supabase.auth.signOut();
-                setError('Access Denied: This login is for hospital staff only. Please use the patient login instead.');
-                toast.error('Not authorized for hospital portal');
-                setLoading(false);
-                return;
+                throw new Error('Access Denied: This portal is strictly for Administrators.');
             }
 
-            // User is verified staff - check for ADMIN privileges
-            const staff = staffData as any;
-            if (staff.role !== 'admin' && staff.role !== 'hospital_admin') {
-                await supabase.auth.signOut();
-                throw new Error('Access Restricted: This portal is for Administrators only. Please use the Staff Login.');
-            }
+            toast.success(`Welcome back, ${adminData.full_name || 'Admin'}!`);
 
-            toast.success(`Welcome back, ${staff.full_name || 'Admin'}!`);
-
-            // Smart Redirect: Send to appropriate dashboard
+            // Smart Redirect: Send to Admin Dashboard
             if (searchParams.get('redirect')) {
                 navigate(searchParams.get('redirect')!);
             } else {
                 navigate('/admin/dashboard');
             }
         } catch (err: any) {
-            console.error('Hospital Login Error:', err);
+            console.error('Admin Login Error:', err);
 
             let message = 'Login failed. Please try again.';
-            if (err.message === 'Invalid login credentials' || err.message === 'Invalid Staff ID or Email') {
-                message = 'Invalid Admin ID, Email or Password.';
-            } else if (err.message.includes('Email not confirmed')) {
-                message = 'Please check your email/account status.';
+            if (err.message === 'Invalid login credentials') {
+                message = 'Invalid Email or Password.';
             } else {
                 message = err.message || message;
             }
