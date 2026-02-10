@@ -11,9 +11,22 @@ const AdminLogin: React.FC = () => {
   const navigate = useNavigate();
   const { hospitals } = useQueue();
   const { signIn } = useAuth();
-  const hospital = hospitals.find(h => h.id === hospitalId);
 
-  if (!hospital) {
+  // Try to find hospital locally, or allow if we have a valid ID form (will be verified on submit)
+  // For better UX, we should fetch it if missing but let's rely on simple check first
+  const hospital = hospitals.find(h => h.id === hospitalId || (h as any).hospitalCode === hospitalId);
+  const [hospitalName, setHospitalName] = React.useState((hospital as any)?.name || '');
+
+  React.useEffect(() => {
+    if (!hospital && hospitalId) {
+      supabase.from('hospitals').select('name, id').or(`id.eq.${hospitalId},hospital_code.eq.${hospitalId}`).maybeSingle()
+        .then(({ data }) => {
+          if (data) setHospitalName(data.name);
+        });
+    }
+  }, [hospital, hospitalId]);
+
+  if (!hospital && !hospitalName) {
     return (
       <div className="max-w-md mx-auto py-20 text-center animate-in fade-in duration-500">
         <div className="w-20 h-20 bg-red-50 text-red-500 rounded-3xl mx-auto flex items-center justify-center mb-6">
@@ -41,7 +54,7 @@ const AdminLogin: React.FC = () => {
           </div>
           <div>
             <h1 className="text-2xl font-black text-slate-900 leading-tight">Staff Portal</h1>
-            <p className="text-teal-600 font-bold uppercase text-[10px] tracking-widest mt-1">{hospital.name}</p>
+            <p className="text-teal-600 font-bold uppercase text-[10px] tracking-widest mt-1">{hospital?.name || hospitalName}</p>
           </div>
         </div>
 
@@ -55,19 +68,36 @@ const AdminLogin: React.FC = () => {
             if (error) throw error;
 
             // Verify staff access
+            // 1. Resolve Hospital ID (URL might be Code or UUID)
+            let targetHospitalId = hospitalId;
+            const { data: hospitalByCode } = await supabase
+              .from('hospitals')
+              .select('id')
+              .eq('hospital_code', hospitalId)
+              .maybeSingle();
+
+            if (hospitalByCode) targetHospitalId = (hospitalByCode as any).id;
+
+            // 2. Check if user is staff for this hospital
             const { data: staff, error: staffError } = await supabase
               .from('staff')
               .select('role')
-              .eq('hospital_id', hospitalId)
+              .eq('hospital_id', targetHospitalId)
               .eq('id', (await supabase.auth.getUser()).data.user?.id)
-              .single();
+              .maybeSingle();
 
-            if (staffError || !staff) {
+            if (!staff) {
               await supabase.auth.signOut();
               throw new Error('You are not authorized to access this hospital portal.');
             }
 
-            navigate(`/admin/${hospitalId}/dashboard`);
+            // STRICT ADMIN CHECK
+            if ((staff as any).role !== 'admin' && (staff as any).role !== 'hospital_admin') {
+              await supabase.auth.signOut();
+              throw new Error('Access Restricted: Administrators Only. Please use Staff Login.');
+            }
+
+            navigate(`/admin/${targetHospitalId}/dashboard`);
           } catch (err: any) {
             toast.error(err.message || 'Login failed');
           }
@@ -103,7 +133,7 @@ const AdminLogin: React.FC = () => {
 
         <div className="pt-4 border-t border-slate-100">
           <p className="text-xs text-slate-400 leading-relaxed italic">
-            "Authorized access only. All actions are logged under the {hospital.name} security protocol."
+            "Authorized access only. All actions are logged under the {hospital?.name || hospitalName} security protocol."
           </p>
         </div>
       </div>

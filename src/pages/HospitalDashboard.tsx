@@ -6,13 +6,26 @@ import {
     TrendingUp, Clock, CreditCard, Activity,
     ChevronRight, MoreVertical, Filter
 } from 'lucide-react';
+import { formatStatus } from '../utils/formatters';
 import { useIsAdmin } from '../hooks/useAuth';
 import { useQueue } from '../store/QueueContext';
+import { QueueStatus } from '../types';
+import { supabase } from '../lib/supabase';
 
 const HospitalDashboard: React.FC = () => {
     const { adminData } = useIsAdmin();
-    const { patients, staffMembers } = useQueue();
+    const { queue: patients } = useQueue();
+    const [staffMembers, setStaffMembers] = useState<any[]>([]);
     const [activeTab, setActiveTab] = useState<'overview' | 'patients' | 'appointments' | 'billing' | 'reports'>('overview');
+
+    React.useEffect(() => {
+        if (adminData?.hospital_id) {
+            supabase.from('staff').select('*').eq('hospital_id', adminData.hospital_id)
+                .then(({ data }) => {
+                    if (data) setStaffMembers(data);
+                });
+        }
+    }, [adminData]);
 
     const stats = [
         { label: 'Total Patients', value: patients.length, change: '+12%', icon: Users, color: 'text-blue-500', bg: 'bg-blue-500/10' },
@@ -74,6 +87,32 @@ const HospitalDashboard: React.FC = () => {
                         </div>
                     </div>
                 ))}
+            </div>
+
+            {/* Facility Profile Card */}
+            <div className="bg-slate-900 text-white rounded-[2rem] p-8 shadow-xl relative overflow-hidden">
+                <div className="absolute top-0 right-0 w-64 h-64 bg-teal-600/20 rounded-full blur-3xl -mr-16 -mt-16"></div>
+                <div className="relative z-10 flex flex-col md:flex-row items-center justify-between gap-6">
+                    <div>
+                        <h2 className="text-2xl font-black mb-2">Facility Profile</h2>
+                        <p className="text-slate-400 font-medium">Manage services, payments, and hospital settings from here.</p>
+                        <div className="flex gap-4 mt-6">
+                            <button className="px-5 py-2.5 bg-teal-600 rounded-xl font-bold flex items-center gap-2 hover:bg-teal-700 transition-colors">
+                                <Settings className="w-4 h-4" /> Settings
+                            </button>
+                            <button className="px-5 py-2.5 bg-white/10 rounded-xl font-bold flex items-center gap-2 hover:bg-white/20 transition-colors">
+                                <CreditCard className="w-4 h-4" /> Billing
+                            </button>
+                        </div>
+                    </div>
+                    <div className="p-6 bg-white/5 rounded-2xl border border-white/10 min-w-[200px]">
+                        <p className="text-[10px] font-black uppercase text-slate-500 tracking-widest mb-2">Hospital Status</p>
+                        <div className="flex items-center gap-2">
+                            <span className="w-3 h-3 bg-green-500 rounded-full animate-pulse"></span>
+                            <span className="font-black text-xl">Operational</span>
+                        </div>
+                    </div>
+                </div>
             </div>
 
             {/* Tab Navigation */}
@@ -240,11 +279,11 @@ const HospitalDashboard: React.FC = () => {
                                         <td className="px-6 py-4 text-slate-400">---</td>
                                         <td className="px-6 py-4 text-slate-400">---</td>
                                         <td className="px-6 py-4">
-                                            <span className={`text-[10px] font-black px-2 py-1 rounded-md uppercase tracking-tighter ${patient.status === 'completed' ? 'bg-green-500/10 text-green-500' :
-                                                patient.status === 'in_progress' ? 'bg-blue-500/10 text-blue-500' :
+                                            <span className={`text-[10px] font-black px-2 py-1 rounded-md uppercase tracking-tighter ${patient.status === QueueStatus.COMPLETED ? 'bg-green-500/10 text-green-500' :
+                                                patient.status === QueueStatus.IN_PROGRESS ? 'bg-blue-500/10 text-blue-500' :
                                                     'bg-yellow-500/10 text-yellow-500'
                                                 }`}>
-                                                {patient.status}
+                                                {formatStatus(patient.status)}
                                             </span>
                                         </td>
                                     </tr>

@@ -6,8 +6,9 @@ import { QueueStatus, JourneyStage, QueueItem, Hospital } from '../types';
 import { HOSPITALS } from '../constants';
 import { supabase } from '../lib/supabase';
 import { createClient } from '@supabase/supabase-js';
-import { Building, Users, Lock, Loader2, Clipboard, ArrowRight, UserPlus, LogOut, Check, HelpCircle, ChevronRight, Activity, CreditCard, Calendar } from 'lucide-react';
+import { Building, Users, Lock, Loader2, Clipboard, ArrowRight, UserPlus, LogOut, Check, HelpCircle, ChevronRight, Activity, CreditCard, Calendar, Moon, Sun } from 'lucide-react';
 import toast from 'react-hot-toast';
+import { formatStage } from '../utils/formatters';
 
 const AdminDashboard: React.FC = () => {
   const { hospitalId } = useParams();
@@ -59,7 +60,14 @@ const AdminDashboard: React.FC = () => {
 
       const tempClient = createClient(
         (import.meta as any).env.VITE_SUPABASE_URL,
-        (import.meta as any).env.VITE_SUPABASE_ANON_KEY
+        (import.meta as any).env.VITE_SUPABASE_ANON_KEY,
+        {
+          auth: {
+            persistSession: false,
+            autoRefreshToken: false,
+            detectSessionInUrl: false
+          }
+        }
       );
 
       const { data: authData, error: authError } = await tempClient.auth.signUp({
@@ -69,7 +77,6 @@ const AdminDashboard: React.FC = () => {
           data: {
             full_name: newStaff.name,
             role: newStaff.role,
-            staff_code: staffCode,
             hospital_id: hospital.id
           }
         }
@@ -193,6 +200,8 @@ const AdminDashboard: React.FC = () => {
             services: hospitalData.services || {},
             registrationFee: hospitalData.registration_fee || 0,
             isOpen: hospitalData.is_open !== false,
+            // Assuming hospital_code is available now
+            hospitalCode: hospitalData.hospital_code
           };
           setHospital(mappedHospital);
         }
@@ -327,8 +336,8 @@ const AdminDashboard: React.FC = () => {
 
   const handleAssignStaff = async (queueId: string, staffId: string) => {
     try {
-      const { error } = await supabase
-        .from('queue_items')
+      const { error } = await (supabase
+        .from('queue_items') as any)
         .update({ assigned_staff_id: staffId || null })
         .eq('id', queueId);
 
@@ -364,18 +373,23 @@ const AdminDashboard: React.FC = () => {
     <div className="space-y-8">
       <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-6">
         <div>
-          <h1 className="text-4xl font-black text-slate-900 mb-2 leading-tight">
-            Welcome, <span className="text-teal-600">Dr. {adminData?.full_name || 'Admin'}</span>
+          <h1 className="text-4xl font-black text-slate-900 dark:text-white mb-2 leading-tight">
+            Welcome, <span className="text-teal-600 dark:text-teal-400">Dr. {adminData?.full_name || 'Admin'}</span>
           </h1>
-          <p className="text-slate-500 font-medium text-lg">Here's what's happening at your facility today.</p>
+          <p className="text-slate-500 dark:text-slate-400 font-medium text-lg">Here's what's happening at your facility today.</p>
         </div>
 
         <div className="flex flex-wrap items-center gap-3">
-          <div className="bg-white border-2 border-slate-100 rounded-xl px-4 py-2 flex items-center space-x-3 shadow-sm">
+          <div className="bg-white dark:bg-slate-800 border-2 border-slate-100 dark:border-slate-700 rounded-xl px-4 py-2 flex items-center space-x-3 shadow-sm">
             <Calendar className="w-4 h-4 text-slate-400" />
-            <input type="date" className="bg-transparent border-none outline-none text-sm font-bold text-slate-700" value={viewDate} onChange={(e) => setViewDate(e.target.value)} />
+            <input
+              type="date"
+              className="bg-transparent border-none outline-none text-sm font-bold text-slate-700 dark:text-slate-200"
+              value={viewDate}
+              onChange={(e) => setViewDate(e.target.value)}
+            />
           </div>
-          <button onClick={() => setShowWalkInModal(true)} className="px-4 py-2.5 bg-slate-900 text-white font-black rounded-xl hover:bg-slate-800 flex items-center space-x-2 transition-all">
+          <button onClick={() => setShowWalkInModal(true)} className="px-4 py-2.5 bg-slate-900 dark:bg-slate-700 text-white font-black rounded-xl hover:bg-slate-800 dark:hover:bg-slate-600 flex items-center space-x-2 transition-all">
             <UserPlus className="w-5 h-5" />
             <span className="text-sm">New Entry</span>
           </button>
@@ -389,7 +403,7 @@ const AdminDashboard: React.FC = () => {
             <Users className="w-5 h-5" />
             <span className="text-sm">Add Staff</span>
           </button>
-          <button onClick={() => { signOut(); navigate('/hospital/login'); }} className="px-4 py-2.5 bg-red-50 text-red-600 font-black rounded-xl hover:bg-red-100 flex items-center space-x-2 transition-all">
+          <button onClick={() => { signOut(); navigate('/hospital/login'); }} className="px-4 py-2.5 bg-red-50 dark:bg-red-900/20 text-red-600 dark:text-red-400 font-black rounded-xl hover:bg-red-100 dark:hover:bg-red-900/30 flex items-center space-x-2 transition-all">
             <LogOut className="w-4 h-4" />
             <span className="text-sm">Log Out</span>
           </button>
@@ -398,24 +412,24 @@ const AdminDashboard: React.FC = () => {
 
       <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
         {[
-          { label: 'Queue Waiting', value: stats.waiting, bg: 'bg-white', color: 'text-slate-900' },
-          { label: 'In Session', value: stats.active, bg: 'bg-teal-50', color: 'text-teal-900' },
-          { label: 'Pending Approval', value: pendingBookings.length, bg: 'bg-amber-50', color: 'text-amber-900' },
-          { label: 'Upcoming', value: stats.upcoming, bg: 'bg-indigo-50', color: 'text-indigo-900' }
+          { label: 'Queue Waiting', value: stats.waiting, bg: 'bg-white dark:bg-slate-800', color: 'text-slate-900 dark:text-white', border: 'border-slate-200 dark:border-slate-700' },
+          { label: 'In Session', value: stats.active, bg: 'bg-teal-50 dark:bg-teal-900/20', color: 'text-teal-900 dark:text-teal-400', border: 'border-teal-100 dark:border-teal-900/30' },
+          { label: 'Pending Approval', value: pendingBookings.length, bg: 'bg-amber-50 dark:bg-amber-900/20', color: 'text-amber-900 dark:text-amber-400', border: 'border-amber-100 dark:border-amber-900/30' },
+          { label: 'Upcoming', value: stats.upcoming, bg: 'bg-indigo-50 dark:bg-indigo-900/20', color: 'text-indigo-900 dark:text-indigo-400', border: 'border-indigo-100 dark:border-indigo-900/30' }
         ].map((stat, i) => (
-          <div key={i} className={`${stat.bg} p-6 rounded-[2rem] border border-slate-200 shadow-sm`}>
+          <div key={i} className={`${stat.bg} p-6 rounded-[2rem] border ${stat.border} shadow-sm`}>
             <p className="text-slate-400 text-[10px] font-black uppercase tracking-widest mb-1">{stat.label}</p>
             <p className={`text-4xl font-black ${stat.color}`}>{stat.value}</p>
           </div>
         ))}
       </div>
 
-      <div className="flex space-x-8 border-b border-slate-200 mb-8 overflow-x-auto scrollbar-hide">
+      <div className="flex space-x-8 border-b border-slate-200 dark:border-slate-700 mb-8 overflow-x-auto scrollbar-hide">
         {['overview', 'queue', 'patients', 'staff', 'profile'].map(tab => (
           <button
             key={tab}
             onClick={() => setActiveTab(tab as any)}
-            className={`pb-4 px-2 text-sm font-black uppercase tracking-widest transition-all relative whitespace-nowrap ${activeTab === tab ? 'text-teal-600' : 'text-slate-400 hover:text-slate-600'}`}
+            className={`pb-4 px-2 text-sm font-black uppercase tracking-widest transition-all relative whitespace-nowrap ${activeTab === tab ? 'text-teal-600 dark:text-teal-400' : 'text-slate-400 hover:text-slate-600 dark:hover:text-slate-300'}`}
           >
             {tab === 'overview' ? 'Overview' : tab === 'queue' ? 'Active Queue' : tab === 'patients' ? 'Patients' : tab === 'staff' ? 'Staff' : 'Profile'}
             {activeTab === tab && <div className="absolute bottom-0 left-0 w-full h-1 bg-teal-600 rounded-full"></div>}
@@ -427,19 +441,19 @@ const AdminDashboard: React.FC = () => {
         <div className="space-y-10 animate-in fade-in duration-500">
           <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
             {/* Manage Hospital Card */}
-            <div className="bg-white p-8 rounded-[2.5rem] border border-slate-200 shadow-sm hover:shadow-xl transition-all group relative overflow-hidden">
-              <div className="absolute top-0 right-0 w-32 h-32 bg-teal-50 rounded-full -mr-16 -mt-16 transition-transform group-hover:scale-110"></div>
+            <div className="bg-white dark:bg-slate-800 p-8 rounded-[2.5rem] border border-slate-200 dark:border-slate-700 shadow-sm hover:shadow-xl transition-all group relative overflow-hidden">
+              <div className="absolute top-0 right-0 w-32 h-32 bg-teal-50 dark:bg-teal-900/20 rounded-full -mr-16 -mt-16 transition-transform group-hover:scale-110"></div>
               <div className="relative z-10">
-                <div className="w-14 h-14 bg-teal-100 text-teal-600 rounded-2xl flex items-center justify-center mb-6">
+                <div className="w-14 h-14 bg-teal-100 dark:bg-teal-900/40 text-teal-600 dark:text-teal-400 rounded-2xl flex items-center justify-center mb-6">
                   <Building className="w-7 h-7" />
                 </div>
-                <h3 className="text-xl font-black text-slate-900 mb-2">Manage Hospital</h3>
-                <p className="text-slate-500 text-sm font-medium mb-8 leading-relaxed">
+                <h3 className="text-xl font-black text-slate-900 dark:text-white mb-2">Hospital Dashboard</h3>
+                <p className="text-slate-500 dark:text-slate-400 text-sm font-medium mb-8 leading-relaxed">
                   Comprehensive Hospital Management System: Records, Staffing, and more.
                 </p>
                 <Link
                   to="/admin/hospital-dashboard"
-                  className="w-full py-4 bg-slate-900 text-white font-black rounded-2xl flex items-center justify-center gap-2 hover:bg-slate-800 transition-all cursor-pointer"
+                  className="w-full py-4 bg-slate-900 dark:bg-slate-700 text-white font-black rounded-2xl flex items-center justify-center gap-2 hover:bg-slate-800 dark:hover:bg-slate-600 transition-all cursor-pointer"
                 >
                   Open HMS Portal
                   <ChevronRight className="w-4 h-4" />
@@ -594,7 +608,7 @@ const AdminDashboard: React.FC = () => {
                             ))}
                           </select>
                         </td>
-                        <td className="px-6 py-6 text-xs font-bold text-slate-700">{item.stage}</td>
+                        <td className="px-6 py-6 text-xs font-bold text-slate-700">{formatStage(item.stage)}</td>
                         <td className="px-8 py-6 text-right">
                           {isToday && item.status !== QueueStatus.COMPLETED && (
                             <button onClick={() => handleUpdateStage(item)} className="px-4 py-2 border-2 border-slate-100 text-slate-900 font-black text-[10px] uppercase rounded-xl">Progress</button>
@@ -698,6 +712,17 @@ const AdminDashboard: React.FC = () => {
           <h3 className="text-xl font-black text-slate-900 mb-8 pb-4 border-b border-slate-100">Facility Information</h3>
           <div className="space-y-6">
             <div><label className="text-[10px] font-black text-slate-400 uppercase tracking-widest block mb-1">Hospital Name</label><p className="text-2xl font-black text-slate-900">{hospital.name}</p></div>
+            <div>
+              <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest block mb-1">Hospital Code (Public ID)</label>
+              <div className="flex items-center gap-2">
+                <p className="text-lg font-mono font-bold text-slate-700 bg-slate-100 px-3 py-1 rounded-lg">
+                  {(hospital as any).hospitalCode || (hospital as any).hospital_code || hospital.id.substring(0, 8) + '...'}
+                </p>
+                <button onClick={() => copyToClipboard((hospital as any).hospitalCode || hospital.id, 'Hospital Code')} className="p-2 hover:bg-slate-100 rounded-lg text-teal-600">
+                  <Clipboard className="w-4 h-4" />
+                </button>
+              </div>
+            </div>
             <div><label className="text-[10px] font-black text-slate-400 uppercase tracking-widest block mb-1">Location</label><p className="text-lg font-bold text-slate-700">{hospital.location}</p></div>
             <div><label className="text-[10px] font-black text-slate-400 uppercase tracking-widest block mb-1">Registration Fee</label><p className="text-lg font-black text-teal-600">₦ {hospital.registrationFee.toLocaleString()}</p></div>
           </div>

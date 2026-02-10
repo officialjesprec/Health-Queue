@@ -73,7 +73,7 @@ const BookingFlow: React.FC = () => {
       await registerUser({ fullName: regForm.fullName, phone: regForm.phone });
     }
 
-    const item = addQueueItem({
+    const item = await addQueueItem({
       hospitalId: hospital.id,
       patientName: regForm.fullName || user?.fullName || 'Guest',
       phone: regForm.phone || user?.phone || 'Guest',

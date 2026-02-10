@@ -49,11 +49,14 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         try {
             // Check Admin
             const { data: admin } = await supabase.from('admins').select('*').eq('id', currentUser.id).maybeSingle();
-            setIsAdmin(!!admin);
+
+            // Check Staff (wait for staff query)
+            const { data: staff } = await supabase.from('staff').select('*').eq('id', currentUser.id).maybeSingle();
+
+            setIsAdmin(!!admin || (staff && (staff as any).role === 'admin'));
             setAdminData(admin);
 
             // Check Staff
-            const { data: staff } = await supabase.from('staff').select('*').eq('id', currentUser.id).maybeSingle();
             setIsStaff(!!staff);
             setStaffData(staff);
 
@@ -168,7 +171,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         refreshProfile
     };
 
-    return <AuthContext.Provider value={ value }> { children } </AuthContext.Provider>;
+    return <AuthContext.Provider value={value}> {children} </AuthContext.Provider>;
 };
 
 export function useAuth() {

@@ -301,9 +301,11 @@ const HospitalRegistration: React.FC = () => {
 
             <div className="space-y-4 mb-10">
               <div className="p-6 bg-slate-50 rounded-[2rem] border-2 border-slate-100 group relative">
-                <p className="text-[10px] font-black uppercase text-slate-400 tracking-[.25em] mb-2 text-center">Your Universal Hospital ID</p>
+                <p className="text-[10px] font-black uppercase text-slate-400 tracking-[.25em] mb-2 text-center">Your Universal Hospital ID (Share this)</p>
                 <div className="flex flex-col items-center">
-                  <p className="font-mono font-black text-lg md:text-xl text-teal-700 tracking-wider mb-4 break-all text-center">{registeredHospital.id}</p>
+                  <p className="font-mono font-black text-xl md:text-3xl text-teal-700 tracking-wider mb-4 break-all text-center">
+                    {registeredHospital.hospital_code || registeredHospital.id}
+                  </p>
                   <button
                     onClick={() => copyToClipboard(registeredHospital.id, 'Hospital ID')}
                     className="flex items-center gap-2 px-6 py-2.5 bg-white border border-slate-200 rounded-xl text-xs font-black text-slate-600 hover:text-teal-600 hover:border-teal-200 transition-all shadow-sm active:scale-95"

@@ -128,7 +128,7 @@ const Layout: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   ];
 
   return (
-    <div className="min-h-screen flex flex-col bg-healthcare-bg" data-theme={getTheme()}>
+    <div className="min-h-screen flex flex-col bg-healthcare-bg dark:bg-slate-900 transition-colors duration-300" data-theme={getTheme()}>
       {/* Header */}
       <header className={`border-b sticky top-0 z-50 shadow-sm transition-all duration-300 ${isActuallyStaff
         ? 'bg-slate-900 border-slate-800 text-white'
@@ -138,7 +138,7 @@ const Layout: React.FC<{ children: React.ReactNode }> = ({ children }) => {
           <div className="h-20 flex items-center justify-between"> {/* Increased header height for professional look */}
             {/* Logo */}
             <Link to="/" className="flex items-center gap-2 z-50 relative group">
-              <Logo variant="full" width={40} height={40} showText={true} />
+              <Logo variant="full" width={40} height={40} showText={true} textColor={isActuallyStaff ? 'text-white' : undefined} />
             </Link>
 
             {/* Desktop Navigation */}

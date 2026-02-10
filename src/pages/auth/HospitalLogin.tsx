@@ -78,24 +78,27 @@ const HospitalLogin: React.FC = () => {
                 return;
             }
 
-            // User is verified staff - allow access
-            toast.success(`Welcome back, ${(staffData as any).full_name || 'Admin'}!`);
+            // User is verified staff - check for ADMIN privileges
+            const staff = staffData as any;
+            if (staff.role !== 'admin' && staff.role !== 'hospital_admin') {
+                await supabase.auth.signOut();
+                throw new Error('Access Restricted: This portal is for Administrators only. Please use the Staff Login.');
+            }
+
+            toast.success(`Welcome back, ${staff.full_name || 'Admin'}!`);
 
             // Smart Redirect: Send to appropriate dashboard
-            const staff = staffData as any;
             if (searchParams.get('redirect')) {
                 navigate(searchParams.get('redirect')!);
-            } else if (staff.role === 'admin') {
-                navigate('/admin/dashboard');
             } else {
-                navigate('/staff/dashboard');
+                navigate('/admin/dashboard');
             }
         } catch (err: any) {
             console.error('Hospital Login Error:', err);
 
             let message = 'Login failed. Please try again.';
             if (err.message === 'Invalid login credentials' || err.message === 'Invalid Staff ID or Email') {
-                message = 'Invalid Staff ID, Email or Password.';
+                message = 'Invalid Admin ID, Email or Password.';
             } else if (err.message.includes('Email not confirmed')) {
                 message = 'Please check your email/account status.';
             } else {

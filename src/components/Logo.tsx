@@ -6,6 +6,7 @@ interface LogoProps {
     height?: number;
     showText?: boolean;
     variant?: 'full' | 'icon' | 'text';
+    textColor?: string;
 }
 
 export const Logo: React.FC<LogoProps> = ({
@@ -13,7 +14,8 @@ export const Logo: React.FC<LogoProps> = ({
     width,
     height,
     showText = true,
-    variant = 'full'
+    variant = 'full',
+    textColor = 'text-healthcare-text'
 }) => {
     if (variant === 'icon') {
         return (
@@ -53,7 +55,7 @@ export const Logo: React.FC<LogoProps> = ({
     if (variant === 'text') {
         return (
             <div className={`flex items-center ${className}`}>
-                <span className="font-heading text-2xl font-bold text-healthcare-text">
+                <span className={`font-heading text-2xl font-bold ${textColor}`}>
                     Health<span className="text-primary-500">Queue</span>
                 </span>
             </div>
@@ -95,7 +97,7 @@ export const Logo: React.FC<LogoProps> = ({
 
             {showText && (
                 <div className="flex flex-col">
-                    <span className="font-heading text-2xl font-bold text-healthcare-text leading-tight">
+                    <span className={`font-heading text-2xl font-bold ${textColor} leading-tight`}>
                         Health<span className="text-primary-500">Queue</span>
                     </span>
                     <span className="text-xs text-healthcare-muted font-body">

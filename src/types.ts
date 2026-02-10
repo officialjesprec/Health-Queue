@@ -1,20 +1,21 @@
 
 export enum QueueStatus {
-  PENDING = 'Pending Approval',
-  WAITING = 'Waiting',
-  IN_PROGRESS = 'In Progress',
-  DELAYED = 'Delayed',
-  COMPLETED = 'Completed',
-  UPCOMING = 'Upcoming'
+  PENDING = 'pending',
+  WAITING = 'waiting',
+  IN_PROGRESS = 'in_progress',
+  DELAYED = 'delayed',
+  COMPLETED = 'completed',
+  UPCOMING = 'upcoming', // Note: 'upcoming' is not in DB constraint! Check migration.
+  CANCELLED = 'cancelled'
 }
 
 export enum JourneyStage {
-  CHECK_IN = 'Check-in',
-  TRIAGE = 'Triage',
-  BILLING = 'Billing',
-  DOCTOR = 'Doctor',
-  PHARMACY = 'Pharmacy',
-  COMPLETED = 'Completed'
+  CHECK_IN = 'check_in',
+  TRIAGE = 'triage',
+  BILLING = 'billing',
+  DOCTOR = 'doctor',
+  PHARMACY = 'pharmacy',
+  COMPLETED = 'completed'
 }
 
 export interface Hospital {
@@ -25,6 +26,7 @@ export interface Hospital {
   services: Record<string, string[]>;
   isOpen: boolean;
   registrationFee: number;
+  hospitalCode?: string;
 }
 
 export interface UserHospitalProfile {
@@ -82,7 +84,7 @@ export interface QueueContextType {
   user: User | null;
   hospitals: Hospital[];
   notifications: HQNotification[];
-  addQueueItem: (item: Omit<QueueItem, 'id' | 'ticketId' | 'timestamp' | 'stage' | 'status'>) => QueueItem;
+  addQueueItem: (item: Omit<QueueItem, 'id' | 'ticketId' | 'timestamp' | 'stage' | 'status'>) => Promise<QueueItem>;
   updateQueueItem: (id: string, updates: Partial<QueueItem>) => void;
   advanceQueue: (hospitalId: string, department: string) => void;
   registerUser: (userData: Partial<User>) => Promise<void>;

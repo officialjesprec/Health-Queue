@@ -10,6 +10,7 @@ import {
     Activity, FileText, LayoutDashboard, ArrowRight
 } from 'lucide-react';
 import toast from 'react-hot-toast';
+import { formatStatus, formatStage } from '../utils/formatters';
 
 const StaffDashboard = () => {
     const { user, signOut } = useAuth();
@@ -77,8 +78,39 @@ const StaffDashboard = () => {
                 setHospital(hospData);
             }
 
-            // 3. Fetch My Assigned Patients (Mock logic for now, real DB query later)
-            setMyPatients(queue.filter(q => q.hospitalId === staffData.hospital_id));
+            // 3. Fetch Patients
+            // - If Receptionist: Fetch PENDING (for confirmation) and WAITING (for overview)
+            // - If Medical Staff: Fetch assigned patients only
+            const today = new Date().toISOString().split('T')[0];
+            const { data: qData } = await supabase
+                .from('queue_items')
+                .select('*')
+                .eq('hospital_id', staffData.hospital_id)
+                .eq('date', today); // Only today's patients
+
+            if (qData) {
+                // Map DB items to local shape
+                const mappedQueue = (qData as any[]).map((item: any) => ({
+                    id: item.id,
+                    ticketId: item.ticket_id,
+                    patientName: item.patient_name,
+                    phone: item.phone,
+                    status: item.status,
+                    stage: item.stage,
+                    hospitalId: item.hospital_id,
+                    department: item.department,
+                    service: item.service,
+                    timeSlot: item.time_slot,
+                    date: item.date,
+                    isEmergency: item.is_emergency,
+                    timestamp: new Date(item.created_at || Date.now()).getTime(),
+                    paymentStatus: item.payment_status,
+                    assignedStaffId: item.assigned_staff_id,
+                    notified: item.notified
+                }));
+
+                setMyPatients(mappedQueue);
+            }
 
         } catch (error) {
             console.error('Error fetching staff details:', error);
@@ -88,26 +120,27 @@ const StaffDashboard = () => {
         }
     };
 
-    const handleStatusUpdate = async (queueId: string, newStatus: 'completed' | 'cancelled' | 'serving') => {
+    const handleStatusUpdate = async (queueId: string, newStatus: QueueStatus) => {
         try {
             // 1. Update Supabase
+            // Note: Staff NOT assigning themselves anymore. Admin assigns.
+            const updates: any = {
+                status: newStatus,
+                stage: newStatus === QueueStatus.IN_PROGRESS ? JourneyStage.DOCTOR : JourneyStage.COMPLETED
+            };
+
             const { error } = await (supabase
                 .from('queue_items') as any)
-                .update({
-                    status: newStatus === 'serving' ? QueueStatus.IN_PROGRESS : QueueStatus.COMPLETED,
-                    stage: newStatus === 'serving' ? JourneyStage.DOCTOR : JourneyStage.COMPLETED
-                })
+                .update(updates)
                 .eq('id', queueId);
 
             if (error) throw error;
 
-            // 2. Update Local State
-            updateQueueItem(queueId, {
-                status: newStatus === 'serving' ? QueueStatus.IN_PROGRESS : QueueStatus.COMPLETED,
-                stage: newStatus === 'serving' ? JourneyStage.DOCTOR : JourneyStage.COMPLETED
-            });
+            // 2. Update Local State (Optimistic)
+            setMyPatients(prev => prev.map(p => p.id === queueId ? { ...p, ...updates } : p));
+            updateQueueItem(queueId, updates);
 
-            toast.success(`Patient status updated to ${newStatus}`);
+            toast.success(`Patient status updated to ${formatStatus(newStatus)}`);
         } catch (error) {
             console.error('Error updating status:', error);
             toast.error('Failed to update status');
@@ -245,7 +278,7 @@ const StaffDashboard = () => {
                             </div>
                             <div>
                                 <p className="text-[10px] text-healthcare-text-muted font-black uppercase tracking-widest mb-1">Active Patients</p>
-                                <h3 className="text-3xl font-black">{myPatients.filter(p => p.status === 'waiting').length}</h3>
+                                <h3 className="text-3xl font-black">{myPatients.filter(p => p.status === QueueStatus.WAITING).length}</h3>
                             </div>
                         </div>
                         <div className="absolute top-0 right-0 w-24 h-24 bg-blue-500/5 rounded-full -mr-12 -mt-12 transition-transform group-hover:scale-150"></div>
@@ -258,7 +291,7 @@ const StaffDashboard = () => {
                             </div>
                             <div>
                                 <p className="text-[10px] text-healthcare-text-muted font-black uppercase tracking-widest mb-1">Served Today</p>
-                                <h3 className="text-3xl font-black">{myPatients.filter(p => p.status === 'completed').length}</h3>
+                                <h3 className="text-3xl font-black">{myPatients.filter(p => p.status === QueueStatus.COMPLETED).length}</h3>
                             </div>
                         </div>
                         <div className="absolute top-0 right-0 w-24 h-24 bg-green-500/5 rounded-full -mr-12 -mt-12 transition-transform group-hover:scale-150"></div>
@@ -321,7 +354,7 @@ const StaffDashboard = () => {
                                         <tr key={patient.id} className="hover:bg-healthcare-bg/40 transition-colors group">
                                             <td className="px-8 py-6">
                                                 <span className="font-mono text-xs font-bold bg-healthcare-bg border border-main px-3 py-1.5 rounded-lg text-healthcare-text-muted group-hover:text-healthcare-text transition-colors">
-                                                    {patient.patientId || '---'}
+                                                    {patient.ticketId || '---'}
                                                 </span>
                                             </td>
                                             <td className="px-8 py-6">
@@ -337,39 +370,56 @@ const StaffDashboard = () => {
                                             </td>
                                             <td className="px-8 py-6">
                                                 <span className={`inline-flex items-center px-4 py-1.5 rounded-xl text-[10px] font-black uppercase tracking-widest border
-                                            ${patient.status === 'serving' ? 'bg-blue-500/10 text-blue-500 border-blue-500/20' :
-                                                        patient.status === 'completed' ? 'bg-green-500/10 text-green-500 border-green-500/20' :
+                                            ${patient.status === QueueStatus.IN_PROGRESS ? 'bg-blue-500/10 text-blue-500 border-blue-500/20' :
+                                                        patient.status === QueueStatus.COMPLETED ? 'bg-green-500/10 text-green-500 border-green-500/20' :
                                                             'bg-yellow-500/10 text-yellow-500 border-yellow-500/20'
                                                     }`}>
-                                                    {patient.status}
+                                                    {formatStatus(patient.status)}
                                                 </span>
                                             </td>
                                             <td className="px-8 py-6">
                                                 <div className="flex items-center gap-2 text-healthcare-text-muted font-bold text-sm">
                                                     <Clock className="w-4 h-4 text-teal-500/40" />
-                                                    15 mins
+                                                    {/* Mock wait time logic */}
+                                                    {Math.floor((Date.now() - patient.timestamp) / 60000)} mins
                                                 </div>
                                             </td>
                                             <td className="px-8 py-6 text-right">
                                                 <div className="flex justify-end gap-3">
-                                                    {patient.status === 'waiting' && (
+                                                    {/* Receptionist Confirmation Logic */}
+                                                    {(profile?.role === 'receptionist' || profile?.role === 'admin') && patient.status === QueueStatus.PENDING && (
                                                         <button
-                                                            onClick={() => handleStatusUpdate(patient.id, 'serving')}
-                                                            className="w-10 h-10 bg-blue-500/10 text-blue-500 border border-blue-500/20 rounded-xl flex items-center justify-center hover:bg-blue-500 hover:text-white transition-all shadow-sm"
-                                                            title="Call Patient"
+                                                            onClick={() => handleStatusUpdate(patient.id, QueueStatus.WAITING)}
+                                                            className="px-4 py-2 bg-teal-600 text-white rounded-xl text-xs font-black uppercase tracking-widest hover:bg-teal-700 transition-all shadow-md"
                                                         >
-                                                            <Activity className="w-4 h-4" />
+                                                            Confirm
                                                         </button>
                                                     )}
-                                                    {patient.status === 'serving' && (
-                                                        <button
-                                                            onClick={() => handleStatusUpdate(patient.id, 'completed')}
-                                                            className="w-10 h-10 bg-green-500/10 text-green-500 border border-green-500/20 rounded-xl flex items-center justify-center hover:bg-green-500 hover:text-white transition-all shadow-sm"
-                                                            title="Complete Service"
-                                                        >
-                                                            <CheckCircle className="w-4 h-4" />
-                                                        </button>
+
+                                                    {/* Assigned Staff Action Logic */}
+                                                    {patient.assignedStaffId === user?.id && (
+                                                        <>
+                                                            {patient.status === QueueStatus.WAITING && (
+                                                                <button
+                                                                    onClick={() => handleStatusUpdate(patient.id, QueueStatus.IN_PROGRESS)}
+                                                                    className="w-10 h-10 bg-blue-500/10 text-blue-500 border border-blue-500/20 rounded-xl flex items-center justify-center hover:bg-blue-500 hover:text-white transition-all shadow-sm"
+                                                                    title="Start Session"
+                                                                >
+                                                                    <Activity className="w-4 h-4" />
+                                                                </button>
+                                                            )}
+                                                            {patient.status === QueueStatus.IN_PROGRESS && (
+                                                                <button
+                                                                    onClick={() => handleStatusUpdate(patient.id, QueueStatus.COMPLETED)}
+                                                                    className="w-10 h-10 bg-green-500/10 text-green-500 border border-green-500/20 rounded-xl flex items-center justify-center hover:bg-green-500 hover:text-white transition-all shadow-sm"
+                                                                    title="Complete Service"
+                                                                >
+                                                                    <CheckCircle className="w-4 h-4" />
+                                                                </button>
+                                                            )}
+                                                        </>
                                                     )}
+
                                                     <button className="w-10 h-10 bg-healthcare-bg text-healthcare-text-muted border border-main rounded-xl flex items-center justify-center hover:bg-healthcare-surface hover:text-healthcare-text transition-all">
                                                         <FileText className="w-4 h-4" />
                                                     </button>
