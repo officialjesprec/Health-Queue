@@ -217,7 +217,7 @@ const HospitalLogin: React.FC = () => {
 
                     <p className="text-center text-slate-500 font-medium mt-8 text-sm">
                         Don't have an admin account?{' '}
-                        <Link to="/hospital/signup" className="text-teal-600 font-bold hover:underline">
+                        <Link to="/admin/signup" className="text-teal-600 font-bold hover:underline">
                             Register Facility
                         </Link>
                     </p>

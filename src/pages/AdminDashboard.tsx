@@ -92,7 +92,7 @@ const AdminDashboard: React.FC = () => {
             hospital_id: hospital.id,
             full_name: newStaff.name,
             role: newStaff.role,
-            // staff_code: staffCode, // Rely on DB trigger or omit if causing schema errors
+            staff_code: staffCode, // Explictly sending staff_code as requested
             email: dummyEmail
           } as any);
 
@@ -374,11 +374,11 @@ const AdminDashboard: React.FC = () => {
   };
 
   return (
-    <div className="space-y-8">
+    <div className="space-y-8 px-4 md:px-12 py-8 max-w-[1600px] mx-auto">
       <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-6">
         <div>
-          <h1 className="text-4xl font-black text-slate-900 dark:text-white mb-2 leading-tight">
-            Welcome, <span className="text-emerald-800 dark:text-emerald-400">Dr. {adminData?.full_name || 'Admin'}</span>
+          <h1 className="text-4xl font-black text-emerald-950 dark:text-emerald-50 mb-2 leading-tight">
+            Welcome, <span className="text-emerald-600 dark:text-emerald-400">Dr. {adminData?.full_name || 'Admin'}</span>
           </h1>
           <p className="text-slate-500 dark:text-slate-400 font-medium text-lg">Here's what's happening at your facility today.</p>
         </div>
@@ -393,7 +393,7 @@ const AdminDashboard: React.FC = () => {
               onChange={(e) => setViewDate(e.target.value)}
             />
           </div>
-          <button onClick={() => setShowWalkInModal(true)} className="px-4 py-2.5 bg-slate-900 dark:bg-slate-700 text-white font-black rounded-xl hover:bg-slate-800 dark:hover:bg-slate-600 flex items-center space-x-2 transition-all">
+          <button onClick={() => setShowWalkInModal(true)} className="px-4 py-2.5 bg-emerald-950 dark:bg-emerald-900 text-white font-black rounded-xl hover:bg-emerald-900 dark:hover:bg-emerald-800 flex items-center space-x-2 transition-all">
             <UserPlus className="w-5 h-5" />
             <span className="text-sm">New Entry</span>
           </button>
@@ -416,7 +416,7 @@ const AdminDashboard: React.FC = () => {
 
       <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
         {[
-          { label: 'Queue Waiting', value: stats.waiting, bg: 'bg-white dark:bg-slate-800', color: 'text-slate-900 dark:text-white', border: 'border-slate-200 dark:border-slate-700' },
+          { label: 'Queue Waiting', value: stats.waiting, bg: 'bg-white dark:bg-slate-800', color: 'text-emerald-950 dark:text-white', border: 'border-slate-200 dark:border-slate-700' },
           { label: 'In Session', value: stats.active, bg: 'bg-teal-50 dark:bg-teal-900/20', color: 'text-teal-900 dark:text-teal-400', border: 'border-teal-100 dark:border-teal-900/30' },
           { label: 'Pending Approval', value: pendingBookings.length, bg: 'bg-amber-50 dark:bg-amber-900/20', color: 'text-amber-900 dark:text-amber-400', border: 'border-amber-100 dark:border-amber-900/30' },
           { label: 'Upcoming', value: stats.upcoming, bg: 'bg-indigo-50 dark:bg-indigo-900/20', color: 'text-indigo-900 dark:text-indigo-400', border: 'border-indigo-100 dark:border-indigo-900/30' }
@@ -428,23 +428,22 @@ const AdminDashboard: React.FC = () => {
         ))}
       </div>
 
-      <div className="flex space-x-8 border-b border-slate-200 dark:border-slate-700 mb-8 overflow-x-auto scrollbar-hide">
+      <div className="flex space-x-2 bg-emerald-50/50 dark:bg-slate-800/50 p-2 rounded-[2rem] overflow-x-auto scrollbar-hide mb-8">
         {['overview', 'queue', 'patients', 'staff', 'profile'].map(tab => (
           <button
             key={tab}
             onClick={() => setActiveTab(tab as any)}
-            className={`pb-4 px-2 text-sm font-black uppercase tracking-widest transition-all relative whitespace-nowrap ${activeTab === tab ? 'text-teal-600 dark:text-teal-400' : 'text-slate-400 hover:text-slate-600 dark:hover:text-slate-300'}`}
+            className={`px-6 py-3 text-xs font-black uppercase tracking-widest transition-all rounded-2xl relative whitespace-nowrap ${activeTab === tab ? 'bg-white dark:bg-slate-700 text-teal-600 dark:text-teal-400 shadow-md' : 'text-slate-400 hover:text-slate-600 dark:hover:text-slate-300 hover:bg-white/50'}`}
           >
             {tab === 'overview' ? 'Overview' : tab === 'queue' ? 'Active Queue' : tab === 'patients' ? 'Patients' : tab === 'staff' ? 'Staff' : 'Profile'}
 
             {/* Notification Dot for Active Queue */}
             {tab === 'queue' && (
-              <span className="absolute top-0 right-0 -mt-2 -mr-3 bg-red-500 text-white text-[9px] font-black px-1.5 py-0.5 rounded-full shadow-sm">
-                {queue.filter(q => q.hospitalId === hospital.id && q.status !== QueueStatus.COMPLETED).length || 3}
+              <span className="absolute top-2 right-2 flex h-2.5 w-2.5">
+                <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-red-400 opacity-75"></span>
+                <span className="relative inline-flex rounded-full h-2.5 w-2.5 bg-red-500"></span>
               </span>
             )}
-
-            {activeTab === tab && <div className="absolute bottom-0 left-0 w-full h-1 bg-teal-600 rounded-full"></div>}
           </button>
         ))}
       </div>
@@ -459,7 +458,7 @@ const AdminDashboard: React.FC = () => {
                 <div className="w-14 h-14 bg-teal-100 dark:bg-teal-900/40 text-teal-600 dark:text-teal-400 rounded-2xl flex items-center justify-center mb-6">
                   <Building className="w-7 h-7" />
                 </div>
-                <h3 className="text-xl font-black text-emerald-900 dark:text-emerald-100 mb-2">Hospital Dashboard</h3>
+                <h3 className="text-xl font-black text-emerald-950 dark:text-emerald-100 mb-2">Hospital Dashboard</h3>
                 <p className="text-slate-500 dark:text-slate-400 text-sm font-medium mb-8 leading-relaxed">
                   Comprehensive Hospital Management System: Records, Staffing, and more.
                 </p>
@@ -480,7 +479,7 @@ const AdminDashboard: React.FC = () => {
                 <div className="w-14 h-14 bg-indigo-100 text-indigo-600 rounded-2xl flex items-center justify-center mb-6">
                   <Users className="w-7 h-7" />
                 </div>
-                <h3 className="text-xl font-black text-emerald-900 mb-2">Staff Management</h3>
+                <h3 className="text-xl font-black text-emerald-950 mb-2">Staff Management</h3>
                 <p className="text-slate-500 text-sm font-medium mb-8 leading-relaxed">
                   Add new healthcare providers and manage your existing medical team.
                 </p>
@@ -501,7 +500,7 @@ const AdminDashboard: React.FC = () => {
                 <div className="w-14 h-14 bg-amber-100 text-amber-600 rounded-2xl flex items-center justify-center mb-6">
                   <Activity className="w-7 h-7" />
                 </div>
-                <h3 className="text-xl font-black text-emerald-900 mb-2">Facility Analytics</h3>
+                <h3 className="text-xl font-black text-emerald-950 mb-2">Facility Analytics</h3>
                 <p className="text-slate-500 text-sm font-medium mb-8 leading-relaxed">
                   Track patient satisfaction, reviews, and overall facility performance.
                 </p>
