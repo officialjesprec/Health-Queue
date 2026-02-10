@@ -101,7 +101,7 @@ const StaffDashboard = () => {
                     department: item.department,
                     service: item.service,
                     timeSlot: item.time_slot,
-                    date: item.date,
+                    date: item.appointment_date,
                     isEmergency: item.is_emergency,
                     timestamp: new Date(item.created_at || Date.now()).getTime(),
                     paymentStatus: item.payment_status,

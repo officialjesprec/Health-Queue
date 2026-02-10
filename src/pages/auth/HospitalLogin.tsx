@@ -61,7 +61,7 @@ const HospitalLogin: React.FC = () => {
             }
 
             // At this point, TypeScript knows adminData is not null and has the correct type
-            toast.success(`Welcome back, ${adminData.full_name || 'Admin'}!`);
+            toast.success(`Welcome back, ${(adminData as any).full_name || 'Admin'}!`);
 
             // Smart Redirect: Send to Admin Dashboard
             const redirect = searchParams.get('redirect');

@@ -61,9 +61,9 @@
   --bg-main: #0a0f18;
   --bg-surface: #111827;
   --bg-card: #1f2937;
-  --text-main: #0f172a;
+  --text-main: #f1f5f9;
   --text-muted: #94a3b8;
-  --border-main: #334155;
+  --border-main: #1e293b;
   --accent-main: #22d3ee;
 }
 
@@ -72,7 +72,7 @@
   --bg-main: #0f172a;
   --bg-surface: #1e293b;
   --bg-card: #334155;
-  --text-main: #0f172a;
+  --text-main: #f1f5f9;
   --text-muted: #94a3b8;
   --border-main: #475569;
   --accent-main: #06b6d4;

@@ -167,7 +167,7 @@ export interface Database {
             queue_items: {
                 Row: {
                     id: string
-                    patient_id: string
+                    patient_id: string | null
                     hospital_id: string
                     ticket_id: string
                     status: string
@@ -182,12 +182,14 @@ export interface Database {
                     queue_position: number | null
                     estimated_wait_time: number | null
                     assigned_staff_id: string | null
+                    patient_name: string | null
+                    phone: string | null
                     created_at: string
                     updated_at: string
                 },
                 Insert: {
                     id?: string
-                    patient_id: string
+                    patient_id?: string | null
                     hospital_id: string
                     ticket_id: string
                     status?: string
@@ -202,12 +204,14 @@ export interface Database {
                     queue_position?: number | null
                     estimated_wait_time?: number | null
                     assigned_staff_id?: string | null
+                    patient_name?: string | null
+                    phone?: string | null
                     created_at?: string
                     updated_at?: string
                 },
                 Update: {
                     id?: string
-                    patient_id?: string
+                    patient_id?: string | null
                     hospital_id?: string
                     ticket_id?: string
                     status?: string
@@ -222,6 +226,8 @@ export interface Database {
                     queue_position?: number | null
                     estimated_wait_time?: number | null
                     assigned_staff_id?: string | null
+                    patient_name?: string | null
+                    phone?: string | null
                     created_at?: string
                     updated_at?: string
                 },
