@@ -130,7 +130,7 @@ const HospitalLogin: React.FC = () => {
                         </div>
                         <h2 className="text-4xl font-black leading-tight mb-6">
                             Secure Access for <br />
-                            <span className="text-teal-400">Healthcare Providers</span>
+                            <span className="text-teal-400">Administrators</span>
                         </h2>
                     </div>
                 </div>
